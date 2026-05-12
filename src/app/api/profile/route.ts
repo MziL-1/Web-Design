@@ -20,8 +20,25 @@ export async function PUT(request: Request) {
     displayName: body.displayName,
     bio: body.bio ?? null,
   };
-  if (body.avatarUrl !== undefined) data.avatarUrl = body.avatarUrl;
-  if (body.sitePublished !== undefined) data.sitePublished = body.sitePublished;
+
+  if (body.avatarUrl !== undefined) {
+    if (body.avatarUrl !== null) {
+      if (typeof body.avatarUrl !== "string" || body.avatarUrl.length > 2048) {
+        return NextResponse.json({ error: "头像URL格式不正确" }, { status: 400 });
+      }
+      if (!body.avatarUrl.startsWith("https://") && !body.avatarUrl.startsWith("data:")) {
+        return NextResponse.json({ error: "头像URL必须以https或data开头" }, { status: 400 });
+      }
+    }
+    data.avatarUrl = body.avatarUrl;
+  }
+
+  if (body.sitePublished !== undefined) {
+    if (typeof body.sitePublished !== "boolean") {
+      return NextResponse.json({ error: "sitePublished必须是布尔值" }, { status: 400 });
+    }
+    data.sitePublished = body.sitePublished;
+  }
 
   const profile = await prisma.profile.update({
     where: { userId: session.user.id },
