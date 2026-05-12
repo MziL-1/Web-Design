@@ -63,6 +63,20 @@ function BlogPageClientInner({ username, profile, posts: initialPosts, isOwner }
     router.refresh();
   };
 
+  const handlePostUpdated = async () => {
+    router.refresh();
+    if (!editingPost) return;
+    const res = await fetch(`/api/posts/${editingPost.id}`);
+    if (res.ok) {
+      const updated = await res.json();
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === updated.id ? { ...updated, _count: p._count } : p
+        )
+      );
+    }
+  };
+
   const handlePostCreated = (post: { id: string; title: string; content: string; createdAt: string; _count: { comments: number } }) => {
     setPosts((prev) => [{ ...post, published: true }, ...prev]);
     router.refresh();
@@ -113,7 +127,7 @@ function BlogPageClientInner({ username, profile, posts: initialPosts, isOwner }
           open={!!editingPost}
           onClose={() => setEditingPost(null)}
           post={editingPost}
-          onSaved={handleRefresh}
+          onSaved={handlePostUpdated}
         />
       )}
     </div>
