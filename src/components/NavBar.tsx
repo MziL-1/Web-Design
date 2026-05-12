@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 
 interface NavBarProps {
   session: {
@@ -10,7 +11,14 @@ interface NavBarProps {
 }
 
 export default function NavBar({ session }: NavBarProps) {
-  const pathname = usePathname();
+  const router = useRouter();
+
+  const handleSignOut = () => {
+    signOut({ redirect: false }).then(() => {
+      router.push("/");
+      router.refresh();
+    });
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur">
@@ -28,12 +36,12 @@ export default function NavBar({ session }: NavBarProps) {
               >
                 {session.user.username}
               </Link>
-              <Link
-                href="/api/auth/signout"
+              <button
+                onClick={handleSignOut}
                 className="text-sm text-neutral-muted hover:text-neutral"
               >
                 退出
-              </Link>
+              </button>
             </>
           ) : (
             <>
