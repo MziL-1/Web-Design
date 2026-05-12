@@ -8,7 +8,7 @@ import { useToast } from "@/components/ui/Toast";
 interface CreatePostModalProps {
   open: boolean;
   onClose: () => void;
-  onCreated: () => void;
+  onCreated: (post: { id: string; title: string; content: string; createdAt: string; _count: { comments: number } }) => void;
 }
 
 export default function CreatePostModal({ open, onClose, onCreated }: CreatePostModalProps) {
@@ -28,10 +28,11 @@ export default function CreatePostModal({ open, onClose, onCreated }: CreatePost
     });
 
     if (res.ok) {
+      const post = await res.json();
       toast("文章已发布");
       setTitle("");
       setContent("");
-      onCreated();
+      onCreated({ id: post.id, title: post.title, content: post.content, createdAt: post.createdAt, _count: { comments: 0 } });
       onClose();
     } else {
       const data = await res.json();

@@ -62,6 +62,11 @@ function BlogPageClientInner({ username, profile, posts: initialPosts, isOwner }
     router.refresh();
   };
 
+  const handlePostCreated = (post: { id: string; title: string; content: string; createdAt: string; _count: { comments: number } }) => {
+    setPosts((prev) => [{ ...post, published: true }, ...prev]);
+    router.refresh();
+  };
+
   return (
     <div className="mx-auto max-w-3xl">
       <BlogHeader
@@ -96,7 +101,7 @@ function BlogPageClientInner({ username, profile, posts: initialPosts, isOwner }
       <CreatePostModal
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onCreated={handleRefresh}
+        onCreated={handlePostCreated}
       />
 
       {editingPost && (
