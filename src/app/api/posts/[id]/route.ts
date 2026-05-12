@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { validateField } from "@/lib/validation";
 
 export async function GET(
   _request: Request,
@@ -35,6 +36,14 @@ export async function PUT(
   }
 
   const body = await request.json();
+
+  const titleErr = validateField(body.title, "标题", 1, 200);
+  if (titleErr) return NextResponse.json({ error: titleErr }, { status: 400 });
+
+  if (typeof body.content === "string" && body.content.length > 50000) {
+    return NextResponse.json({ error: "文章内容不能超过50000字符" }, { status: 400 });
+  }
+
   const updated = await prisma.post.update({
     where: { id },
     data: { title: body.title, content: body.content, published: body.published },
