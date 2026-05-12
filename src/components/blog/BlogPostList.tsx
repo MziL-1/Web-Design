@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
 import type { PostItem } from "@/lib/types";
@@ -22,6 +22,8 @@ export default function BlogPostList({
   onEditPost,
   onDeletePost,
 }: BlogPostListProps) {
+  const router = useRouter();
+
   if (posts.length === 0) {
     return (
       <div className="mt-8">
@@ -49,28 +51,29 @@ export default function BlogPostList({
         {posts.map((post) => (
           <div
             key={post.id}
-            className={`rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md ${
+            onClick={() => router.push(`/${username}/${post.id}`)}
+            className={`cursor-pointer rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md ${
               !post.published ? "opacity-60" : ""
             }`}
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <Link
-                  href={`/${username}/${post.id}`}
-                  className="text-lg font-semibold hover:text-primary"
-                >
+                <span className="text-lg font-semibold hover:text-primary">
                   {post.title}
                   {!post.published && (
                     <span className="ml-2 text-xs text-warning">(草稿)</span>
                   )}
-                </Link>
+                </span>
                 <div className="mt-1 flex items-center gap-3 text-sm text-neutral-muted">
                   <span>{new Date(post.createdAt).toLocaleDateString("zh-CN")}</span>
                   <span>{post._count.comments} 条评论</span>
                 </div>
               </div>
               {isOwner && (
-                <div className="flex gap-2">
+                <div
+                  className="flex gap-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Button variant="secondary" size="sm" onClick={() => onEditPost(post)}>
                     编辑
                   </Button>
