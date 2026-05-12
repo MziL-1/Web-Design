@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { ToastProvider, useToast } from "@/components/ui/Toast";
 import BlogHeader from "@/components/blog/BlogHeader";
 import BlogPostList from "@/components/blog/BlogPostList";
@@ -69,6 +70,9 @@ function BlogPageClientInner({ username, profile, posts: initialPosts, isOwner }
 
   return (
     <div className="mx-auto max-w-3xl">
+      <Link href="/" className="mb-4 inline-block text-sm text-neutral-muted hover:text-primary">
+        &larr; 发现更多博客
+      </Link>
       <BlogHeader
         displayName={profile.displayName}
         bio={profile.bio}
