@@ -25,6 +25,19 @@ export async function POST(request: Request) {
     },
   });
 
+  if (body.published !== false) {
+    const profile = await prisma.profile.findUnique({
+      where: { userId: session.user.id },
+      select: { sitePublished: true },
+    });
+    if (profile && !profile.sitePublished) {
+      await prisma.profile.update({
+        where: { userId: session.user.id },
+        data: { sitePublished: true },
+      });
+    }
+  }
+
   return NextResponse.json(post, { status: 201 });
 }
 
