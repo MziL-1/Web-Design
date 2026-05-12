@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { status: 201 });
   } catch (e) {
     console.error("register error:", e);
     return NextResponse.json({ error: "服务器内部错误" }, { status: 500 });
