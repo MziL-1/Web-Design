@@ -1,0 +1,20 @@
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import type { NextRequest } from "next/server";
+
+const protectedPaths = ["/api/profile", "/api/posts", "/api/my-posts", "/api/upload"];
+const needsAuth = (path: string) => protectedPaths.some((p) => path.startsWith(p));
+
+export default auth((req) => {
+  const { pathname } = req.nextUrl;
+
+  if (needsAuth(pathname) && !req.auth) {
+    return NextResponse.json({ error: "未登录" }, { status: 401 });
+  }
+
+  return NextResponse.next();
+});
+
+export const config = {
+  matcher: ["/api/profile/:path*", "/api/posts/:path*", "/api/my-posts", "/api/upload"],
+};
