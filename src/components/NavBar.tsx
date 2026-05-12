@@ -14,6 +14,7 @@ export default function NavBar({ session }: NavBarProps) {
   const router = useRouter();
 
   const handleSignOut = () => {
+    if (!confirm("确定要退出登录吗？")) return;
     signOut({ redirect: false }).then(() => {
       router.push("/");
       router.refresh();
