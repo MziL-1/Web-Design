@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth";
 import Link from "next/link";
 import BlogPostCard from "@/components/blog/BlogPostCard";
 import type { Metadata } from "next";
@@ -9,12 +10,16 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
+  const session = await auth();
   const profiles = await prisma.profile.findMany({
     where: { sitePublished: true },
     include: { user: { select: { username: true } } },
     orderBy: { updatedAt: "desc" },
     take: 12,
   });
+
+  const actionHref = session?.user?.username ? `/${session.user.username}` : "/register";
+  const actionLabel = session?.user?.username ? "开始写博客" : "成为第一个";
 
   return (
     <div>
@@ -26,8 +31,8 @@ export default async function HomePage() {
       {profiles.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 py-20">
           <p className="text-lg text-neutral-muted">还没有人发布博客</p>
-          <Link href="/register" className="mt-4 rounded-lg bg-primary px-6 py-2 text-white hover:bg-primary/90">
-            成为第一个
+          <Link href={actionHref} className="mt-4 rounded-lg bg-primary px-6 py-2 text-white hover:bg-primary/90">
+            {actionLabel}
           </Link>
         </div>
       ) : (
