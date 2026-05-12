@@ -16,15 +16,17 @@ interface CommentSectionProps {
   postId: string;
   initialComments: Comment[];
   isOwner: boolean;
+  currentUsername?: string;
 }
 
 export default function CommentSection({
   postId,
   initialComments,
   isOwner,
+  currentUsername,
 }: CommentSectionProps) {
   const [comments, setComments] = useState(initialComments);
-  const [authorName, setAuthorName] = useState("");
+  const [authorName, setAuthorName] = useState(currentUsername ?? "");
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
@@ -79,14 +81,20 @@ export default function CommentSection({
           autoComplete="off"
           style={{ display: "none" }}
         />
-        <input
-          value={authorName}
-          onChange={(e) => setAuthorName(e.target.value)}
-          placeholder="你的昵称"
-          maxLength={30}
-          required
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-        />
+        {currentUsername ? (
+          <div className="text-sm text-neutral-muted">
+            评论身份：<span className="font-medium text-neutral">{currentUsername}</span>
+          </div>
+        ) : (
+          <input
+            value={authorName}
+            onChange={(e) => setAuthorName(e.target.value)}
+            placeholder="你的昵称"
+            maxLength={30}
+            required
+            className="w-full rounded-md border border-slate-300 px-3 py-2 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        )}
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -96,7 +104,7 @@ export default function CommentSection({
           rows={4}
           className="w-full rounded-md border border-slate-300 px-3 py-2 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
         />
-        <Button type="submit" loading={submitting} disabled={!authorName.trim() || !content.trim()}>
+        <Button type="submit" loading={submitting} disabled={!content.trim()}>
           发表评论
         </Button>
       </form>

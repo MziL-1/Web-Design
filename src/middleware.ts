@@ -3,7 +3,10 @@ import { auth } from "@/lib/auth";
 import type { NextRequest } from "next/server";
 
 const protectedPaths = ["/api/profile", "/api/posts", "/api/my-posts", "/api/upload"];
-const needsAuth = (path: string) => protectedPaths.some((p) => path.startsWith(p));
+const needsAuth = (path: string) => {
+  if (path.includes("/comments")) return false;
+  return protectedPaths.some((p) => path.startsWith(p));
+};
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;

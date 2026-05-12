@@ -25,9 +25,10 @@ interface Props {
   isOwner: boolean;
   username: string;
   postId: string;
+  currentUsername?: string;
 }
 
-export default function PostPageClient({ post, comments, isOwner, username, postId }: Props) {
+export default function PostPageClient({ post, comments, isOwner, username, postId, currentUsername }: Props) {
   return (
     <ToastProvider>
       <div className="mx-auto max-w-2xl">
@@ -55,6 +56,7 @@ export default function PostPageClient({ post, comments, isOwner, username, post
           postId={postId}
           initialComments={comments}
           isOwner={isOwner}
+          currentUsername={currentUsername}
         />
       </div>
     </ToastProvider>

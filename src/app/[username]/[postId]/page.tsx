@@ -52,6 +52,7 @@ export default async function PostPage({ params }: Props) {
       isOwner={isOwner}
       username={username}
       postId={postId}
+      currentUsername={session?.user?.username}
     />
   );
 }
