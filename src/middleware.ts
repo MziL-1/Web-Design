@@ -8,7 +8,7 @@ const needsAuth = (path: string) => protectedPaths.some((p) => path.startsWith(p
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
-  if (needsAuth(pathname) && !req.auth) {
+  if (req.method !== "GET" && needsAuth(pathname) && !req.auth) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
 
