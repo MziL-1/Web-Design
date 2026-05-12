@@ -4,9 +4,10 @@ interface BlogPostCardProps {
   title: string;
   description?: string;
   avatarUrl?: string;
+  postCount?: number;
 }
 
-export default function BlogPostCard({ title, description, avatarUrl }: BlogPostCardProps) {
+export default function BlogPostCard({ title, description, avatarUrl, postCount }: BlogPostCardProps) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-center gap-3">
@@ -17,10 +18,13 @@ export default function BlogPostCard({ title, description, avatarUrl }: BlogPost
             <span className="text-lg font-semibold text-primary">{title[0]}</span>
           )}
         </div>
-        <div>
-          <h2 className="text-lg font-semibold">{title}</h2>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-lg font-semibold truncate">{title}</h2>
           {description && (
             <p className="mt-0.5 line-clamp-1 text-sm text-neutral-muted">{description}</p>
+          )}
+          {postCount !== undefined && (
+            <p className="mt-0.5 text-xs text-neutral-muted">{postCount} 篇文章</p>
           )}
         </div>
       </div>

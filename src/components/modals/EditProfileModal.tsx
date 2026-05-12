@@ -91,14 +91,14 @@ export default function EditProfileModal({
               {uploading ? "上传中..." : "选择图片"}
               <input
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
                 onChange={handleFileUpload}
                 className="hidden"
                 disabled={uploading}
               />
             </label>
           </div>
-          <p className="mt-1 text-xs text-neutral-muted">支持 jpg/png/webp，最大 2MB</p>
+          <p className="mt-1 text-xs text-neutral-muted">支持 jpg/png/webp/gif/avif，最大 5MB</p>
         </div>
 
         <div>

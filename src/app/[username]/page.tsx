@@ -18,6 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: user.profile.displayName,
     description: user.profile.bio ?? `${user.profile.displayName} 的个人博客`,
+    alternates: { types: { "application/rss+xml": `/${username}/rss.xml` } },
     openGraph: {
       title: user.profile.displayName,
       description: user.profile.bio ?? undefined,

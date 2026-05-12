@@ -74,10 +74,10 @@ export default function BlogPostList({
                   className="flex gap-2"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <Button variant="secondary" size="sm" onClick={() => onEditPost(post)}>
+                  <Button variant="secondary" size="sm" onClick={() => onEditPost(post)} aria-label={`编辑文章 ${post.title}`}>
                     编辑
                   </Button>
-                  <Button variant="danger" size="sm" onClick={() => onDeletePost(post)}>
+                  <Button variant="danger" size="sm" onClick={() => onDeletePost(post)} aria-label={`删除文章 ${post.title}`}>
                     删除
                   </Button>
                 </div>

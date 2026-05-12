@@ -29,8 +29,12 @@ export async function PUT(request: Request) {
       if (typeof body.avatarUrl !== "string" || body.avatarUrl.length > 2048) {
         return NextResponse.json({ error: "头像URL格式不正确" }, { status: 400 });
       }
-      if (!body.avatarUrl.startsWith("https://") && !body.avatarUrl.startsWith("data:")) {
-        return NextResponse.json({ error: "头像URL必须以https或data开头" }, { status: 400 });
+      if (
+        !body.avatarUrl.startsWith("https://") &&
+        !body.avatarUrl.startsWith("data:") &&
+        !body.avatarUrl.startsWith("/")
+      ) {
+        return NextResponse.json({ error: "头像URL格式不正确" }, { status: 400 });
       }
     }
     data.avatarUrl = body.avatarUrl;

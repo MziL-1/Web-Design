@@ -13,7 +13,14 @@ export default async function HomePage() {
   const session = await auth();
   const profiles = await prisma.profile.findMany({
     where: { sitePublished: true },
-    include: { user: { select: { username: true } } },
+    include: {
+      user: {
+        select: {
+          username: true,
+          _count: { select: { posts: { where: { published: true } } } },
+        },
+      },
+    },
     orderBy: { updatedAt: "desc" },
     take: 12,
   });
@@ -43,6 +50,7 @@ export default async function HomePage() {
                 title={p.displayName}
                 description={p.bio ?? undefined}
                 avatarUrl={p.avatarUrl ?? undefined}
+                postCount={p.user._count.posts}
               />
             </Link>
           ))}

@@ -39,9 +39,12 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
         if (e.target === dialogRef.current) onClose();
       }}
       className="fixed inset-0 z-50 m-auto max-h-[90vh] w-full max-w-lg rounded-lg bg-white p-6 shadow-xl backdrop:bg-black/50 sm:max-h-[85vh]"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
     >
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-semibold">{title}</h2>
+        <h2 id="modal-title" className="text-xl font-semibold">{title}</h2>
         <button
           onClick={onClose}
           className="rounded-md p-1 text-neutral-muted hover:bg-slate-100 hover:text-neutral"
