@@ -1,6 +1,0 @@
-[P3] Discover API                                                 (code=200 expected=200 body=[{"id":"cmp1zyqsr0002v8rw2fbrq0so","userId":"cmp1zyqsr0001v8rwl3ij5fnr","display)
-[P3] Nonexistent user 404                     (code=404)
-[P0] Register new user                                            (code=200 expected=201 body={"success":true})
-[P0] GET /api/profile (auth)                                      (code=405 expected=200 body=)
-[P3] POST upload no file                                          (code=500 expected=400 body=)
-[P1] MW: POST comments allowed                                    (code=404 expected=200 body={"error":"文章不存在"})

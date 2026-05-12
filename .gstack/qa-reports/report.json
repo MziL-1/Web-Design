@@ -1,7 +1,0 @@
-{
-  "date": "2026-05-12T11:17:23Z",
-  "tier": "standard",
-  "branch": "main",
-  "results": { "pass": 24, "fail": 20, "skip": 0, "total": 44 },
-  "bugs_file": "/home/mzl/projects/blog-platform/.gstack/qa-reports/bugs-1778584630.txt"
-}
