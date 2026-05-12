@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ToastProvider } from "@/components/ui/Toast";
+import { ToastProvider, useToast } from "@/components/ui/Toast";
 import BlogHeader from "@/components/blog/BlogHeader";
 import BlogPostList from "@/components/blog/BlogPostList";
 import EditProfileModal from "@/components/modals/EditProfileModal";
@@ -22,8 +22,9 @@ interface Props {
   isOwner: boolean;
 }
 
-export default function BlogPageClient({ username, profile, posts: initialPosts, isOwner }: Props) {
+function BlogPageClientInner({ username, profile, posts: initialPosts, isOwner }: Props) {
   const router = useRouter();
+  const { toast } = useToast();
   const [posts, setPosts] = useState(initialPosts);
   const [sitePublished, setSitePublished] = useState(profile.sitePublished);
   const [toggling, setToggling] = useState(false);
@@ -33,19 +34,28 @@ export default function BlogPageClient({ username, profile, posts: initialPosts,
 
   const handleTogglePublished = async () => {
     setToggling(true);
-    await fetch("/api/profile", {
+    const res = await fetch("/api/profile", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sitePublished: !sitePublished }),
     });
-    setSitePublished(!sitePublished);
+    if (res.ok) {
+      setSitePublished((prev) => !prev);
+    } else {
+      toast("操作失败，请重试", "error");
+    }
     setToggling(false);
   };
 
   const handleDeletePost = async (post: PostItem) => {
     if (!confirm(`确定删除"${post.title}"？此操作不可撤销。`)) return;
-    await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
-    setPosts((prev) => prev.filter((p) => p.id !== post.id));
+    const res = await fetch(`/api/posts/${post.id}`, { method: "DELETE" });
+    if (res.ok) {
+      setPosts((prev) => prev.filter((p) => p.id !== post.id));
+      toast("文章已删除");
+    } else {
+      toast("删除失败", "error");
+    }
   };
 
   const handleRefresh = () => {
@@ -53,28 +63,26 @@ export default function BlogPageClient({ username, profile, posts: initialPosts,
   };
 
   return (
-    <ToastProvider>
-      <div className="mx-auto max-w-3xl">
-        <BlogHeader
-          displayName={profile.displayName}
-          bio={profile.bio}
-          avatarUrl={profile.avatarUrl}
-          isOwner={isOwner}
-          sitePublished={sitePublished}
-          onEditProfile={() => setShowProfileModal(true)}
-          onTogglePublished={handleTogglePublished}
-          toggling={toggling}
-        />
+    <div className="mx-auto max-w-3xl">
+      <BlogHeader
+        displayName={profile.displayName}
+        bio={profile.bio}
+        avatarUrl={profile.avatarUrl}
+        isOwner={isOwner}
+        sitePublished={sitePublished}
+        onEditProfile={() => setShowProfileModal(true)}
+        onTogglePublished={handleTogglePublished}
+        toggling={toggling}
+      />
 
-        <BlogPostList
-          posts={posts}
-          isOwner={isOwner}
-          username={username}
-          onNewPost={() => setShowCreateModal(true)}
-          onEditPost={(post) => setEditingPost({ id: post.id, title: post.title, content: post.content ?? "", published: post.published })}
-          onDeletePost={handleDeletePost}
-        />
-      </div>
+      <BlogPostList
+        posts={posts}
+        isOwner={isOwner}
+        username={username}
+        onNewPost={() => setShowCreateModal(true)}
+        onEditPost={(post) => setEditingPost({ id: post.id, title: post.title, content: post.content ?? "", published: post.published })}
+        onDeletePost={handleDeletePost}
+      />
 
       <EditProfileModal
         open={showProfileModal}
@@ -99,6 +107,14 @@ export default function BlogPageClient({ username, profile, posts: initialPosts,
           onSaved={handleRefresh}
         />
       )}
+    </div>
+  );
+}
+
+export default function BlogPageClient(props: Props) {
+  return (
+    <ToastProvider>
+      <BlogPageClientInner {...props} />
     </ToastProvider>
   );
 }
