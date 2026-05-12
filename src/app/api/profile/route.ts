@@ -9,17 +9,20 @@ export async function PUT(request: Request) {
 
   const body = await request.json();
 
-  const nameErr = validateField(body.displayName, "显示名称", 1, 50);
-  if (nameErr) return NextResponse.json({ error: nameErr }, { status: 400 });
+  const data: Record<string, unknown> = {};
 
-  if (body.bio && typeof body.bio === "string" && body.bio.length > 500) {
-    return NextResponse.json({ error: "简介不能超过500字符" }, { status: 400 });
+  if (body.displayName !== undefined) {
+    const nameErr = validateField(body.displayName, "显示名称", 1, 50);
+    if (nameErr) return NextResponse.json({ error: nameErr }, { status: 400 });
+    data.displayName = body.displayName;
   }
 
-  const data: Record<string, unknown> = {
-    displayName: body.displayName,
-    bio: body.bio ?? null,
-  };
+  if (body.bio !== undefined) {
+    if (typeof body.bio === "string" && body.bio.length > 500) {
+      return NextResponse.json({ error: "简介不能超过500字符" }, { status: 400 });
+    }
+    data.bio = body.bio;
+  }
 
   if (body.avatarUrl !== undefined) {
     if (body.avatarUrl !== null) {
