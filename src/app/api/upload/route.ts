@@ -32,7 +32,8 @@ export async function POST(request: Request) {
         contentType: file.type,
       });
       return NextResponse.json({ url: blob.url });
-    } catch {
+    } catch (e) {
+      console.error("blob upload error:", e);
       return NextResponse.json({ url: dataUri });
     }
   }

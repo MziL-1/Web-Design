@@ -44,7 +44,8 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (e) {
+    console.error("register error:", e);
     return NextResponse.json({ error: "服务器内部错误" }, { status: 500 });
   }
 }
