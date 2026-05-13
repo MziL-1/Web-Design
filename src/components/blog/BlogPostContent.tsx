@@ -36,6 +36,21 @@ export default function BlogPostContent({ content }: BlogPostContentProps) {
               {children}
             </blockquote>
           ),
+          table: ({ children }) => (
+            <div className="mb-4 overflow-x-auto">
+              <table className="w-full border-collapse border border-slate-300">
+                {children}
+              </table>
+            </div>
+          ),
+          thead: ({ children }) => <thead className="bg-slate-50">{children}</thead>,
+          th: ({ children }) => (
+            <th className="border border-slate-300 px-3 py-2 text-left text-sm font-semibold">{children}</th>
+          ),
+          td: ({ children }) => (
+            <td className="border border-slate-300 px-3 py-2 text-sm">{children}</td>
+          ),
+          tr: ({ children }) => <tr className="even:bg-slate-50">{children}</tr>,
         }}
       >
         {content}

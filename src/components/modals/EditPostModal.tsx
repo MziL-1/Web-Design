@@ -43,35 +43,37 @@ export default function EditPostModal({ open, onClose, post, onSaved }: EditPost
 
   return (
     <Modal open={open} onClose={onClose} title="编辑文章">
-      <div className="space-y-4">
-        <div>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={200}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-lg font-semibold outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-          />
+      <div className="flex flex-col max-h-[70vh]">
+        <div className="overflow-y-auto px-1 space-y-4">
+          <div>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={200}
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-lg font-semibold outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="published-toggle"
+              checked={published}
+              onChange={(e) => setPublished(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+            />
+            <label htmlFor="published-toggle" className="text-sm text-neutral-muted">对外可见</label>
+          </div>
+
+          <div className="min-h-[300px]">
+            <MarkdownEditor
+              initialValue={content}
+              onChange={setContent}
+            />
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="published-toggle"
-            checked={published}
-            onChange={(e) => setPublished(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
-          />
-          <label htmlFor="published-toggle" className="text-sm text-neutral-muted">对外可见</label>
-        </div>
-
-        <div className="min-h-[300px]">
-          <MarkdownEditor
-            initialValue={content}
-            onChange={setContent}
-          />
-        </div>
-
-        <div className="flex justify-end gap-3">
+        <div className="sticky bottom-0 flex justify-end gap-3 pt-4 mt-4 border-t border-slate-200 bg-white">
           <Button variant="secondary" onClick={onClose}>取消</Button>
           <Button onClick={handleSave} loading={saving} disabled={!title.trim()}>保存</Button>
         </div>
