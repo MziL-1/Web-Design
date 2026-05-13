@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 const LIMITS: Record<string, { count: number; windowSec: number }> = {
   comment: { count: 5, windowSec: 60 },
   register: { count: 3, windowSec: 3600 },
+  import: { count: 10, windowSec: 60 },
 };
 
 export async function checkRateLimit(

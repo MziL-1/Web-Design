@@ -4,6 +4,8 @@ import { useState } from "react";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
+import MarkdownEditor from "@/components/editor/MarkdownEditor";
+import FileImportDropzone from "@/components/editor/FileImportDropzone";
 
 interface CreatePostModalProps {
   open: boolean;
@@ -41,9 +43,22 @@ export default function CreatePostModal({ open, onClose, onCreated }: CreatePost
     setSaving(false);
   };
 
+  const handleFileParsed = (importedContent: string, filename: string, warnings: string[]) => {
+    setContent(importedContent);
+    const nameWithoutExt = filename.replace(/\.[^.]+$/, "");
+    if (!title) setTitle(nameWithoutExt);
+    if (warnings.length > 0) {
+      toast(`文件已导入，但存在 ${warnings.length} 条警告，请检查内容`, "error");
+    } else {
+      toast("文件导入成功");
+    }
+  };
+
   return (
     <Modal open={open} onClose={onClose} title="写文章">
       <div className="space-y-4">
+        <FileImportDropzone onFileParsed={handleFileParsed} />
+
         <div>
           <input
             value={title}
@@ -54,16 +69,11 @@ export default function CreatePostModal({ open, onClose, onCreated }: CreatePost
           />
         </div>
 
-        <div>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="写点什么... (支持 Markdown)"
-            maxLength={50000}
-            rows={10}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+        <div className="min-h-[300px]">
+          <MarkdownEditor
+            initialValue={content}
+            onChange={setContent}
           />
-          <p className="mt-1 text-xs text-neutral-muted">支持 Markdown 语法 · {content.length}/50000</p>
         </div>
 
         <div className="flex justify-end gap-3">

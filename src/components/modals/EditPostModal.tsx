@@ -4,6 +4,7 @@ import { useState } from "react";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
+import MarkdownEditor from "@/components/editor/MarkdownEditor";
 
 interface EditPostModalProps {
   open: boolean;
@@ -63,15 +64,11 @@ export default function EditPostModal({ open, onClose, post, onSaved }: EditPost
           <label htmlFor="published-toggle" className="text-sm text-neutral-muted">对外可见</label>
         </div>
 
-        <div>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            maxLength={50000}
-            rows={10}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+        <div className="min-h-[300px]">
+          <MarkdownEditor
+            initialValue={content}
+            onChange={setContent}
           />
-          <p className="mt-1 text-xs text-neutral-muted">{content.length}/50000</p>
         </div>
 
         <div className="flex justify-end gap-3">
