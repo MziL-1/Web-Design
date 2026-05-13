@@ -42,7 +42,7 @@ export default function EditPostModal({ open, onClose, post, onSaved }: EditPost
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="编辑文章">
+    <Modal open={open} onClose={onClose} title="编辑文章" size="wide">
       <div className="flex flex-col max-h-[70vh]">
         <div className="overflow-y-auto px-1 space-y-4">
           <div>

@@ -7,9 +7,15 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  size?: "default" | "wide";
 }
 
-export default function Modal({ open, onClose, title, children }: ModalProps) {
+const sizeClasses = {
+  default: "max-w-lg",
+  wide: "max-w-4xl",
+};
+
+export default function Modal({ open, onClose, title, children, size = "default" }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -38,7 +44,7 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
       onClick={(e) => {
         if (e.target === dialogRef.current) onClose();
       }}
-      className="fixed inset-0 z-50 m-auto max-h-[90vh] w-full max-w-lg rounded-lg bg-white p-6 shadow-xl backdrop:bg-black/50 sm:max-h-[85vh]"
+      className={`fixed inset-0 z-50 m-auto max-h-[90vh] w-full ${sizeClasses[size]} rounded-lg bg-white p-6 shadow-xl backdrop:bg-black/50 sm:max-h-[85vh]`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="modal-title"

@@ -55,7 +55,7 @@ export default function CreatePostModal({ open, onClose, onCreated }: CreatePost
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="写文章">
+    <Modal open={open} onClose={onClose} title="写文章" size="wide">
       <div className="flex flex-col max-h-[70vh]">
         <div className="overflow-y-auto px-1 space-y-4">
           <FileImportDropzone onFileParsed={handleFileParsed} />
