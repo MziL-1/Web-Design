@@ -62,7 +62,8 @@ export default async function BlogPage({ params }: Props) {
       content: true,
       published: true,
       createdAt: true,
-      _count: { select: { comments: true } },
+      _count: { select: { comments: true, likes: true } },
+      tags: { include: { tag: true } },
     },
     orderBy: { createdAt: "desc" },
   });

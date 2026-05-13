@@ -3,11 +3,11 @@
 @theme {
   --color-primary: #2563EB;
   --color-primary-light: #DBEAFE;
-  --color-accent: #059669;
-  --color-neutral: #1E293B;
-  --color-neutral-muted: #64748B;
+  --color-accent: #2563EB;
+  --color-neutral: #111827;
+  --color-neutral-muted: #6B7280;
   --color-surface: #FFFFFF;
-  --color-background: #F8FAFC;
+  --color-background: #FFFFFF;
   --color-success: #16A34A;
   --color-error: #DC2626;
   --color-warning: #D97706;
