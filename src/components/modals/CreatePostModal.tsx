@@ -10,7 +10,7 @@ import FileImportDropzone from "@/components/editor/FileImportDropzone";
 interface CreatePostModalProps {
   open: boolean;
   onClose: () => void;
-  onCreated: (post: { id: string; title: string; content: string; createdAt: string; _count: { comments: number } }) => void;
+  onCreated: (post: { id: string; title: string; content: string; createdAt: string; _count: { comments: number; likes: number } }) => void;
 }
 
 export default function CreatePostModal({ open, onClose, onCreated }: CreatePostModalProps) {
@@ -34,7 +34,7 @@ export default function CreatePostModal({ open, onClose, onCreated }: CreatePost
       toast("文章已发布");
       setTitle("");
       setContent("");
-      onCreated({ id: post.id, title: post.title, content: post.content, createdAt: post.createdAt, _count: { comments: 0 } });
+      onCreated({ id: post.id, title: post.title, content: post.content, createdAt: post.createdAt, _count: { comments: 0, likes: 0 } });
       onClose();
     } else {
       const data = await res.json();

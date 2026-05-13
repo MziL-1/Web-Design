@@ -4,7 +4,8 @@ export interface PostItem {
   content?: string;
   published: boolean;
   createdAt: string;
-  _count: { comments: number };
+  _count: { comments: number; likes: number };
+  tags?: { tag: { id: string; name: string } }[];
 }
 
 export interface PostEditData {

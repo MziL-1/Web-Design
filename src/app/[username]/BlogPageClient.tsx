@@ -79,7 +79,7 @@ function BlogPageClientInner({ username, profile, posts: initialPosts, isOwner, 
     }
   };
 
-  const handlePostCreated = (post: { id: string; title: string; content: string; createdAt: string; _count: { comments: number } }) => {
+  const handlePostCreated = (post: { id: string; title: string; content: string; createdAt: string; _count: { comments: number; likes: number } }) => {
     setPosts((prev) => [{ ...post, published: true }, ...prev]);
     router.refresh();
   };

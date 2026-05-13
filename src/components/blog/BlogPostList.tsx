@@ -73,10 +73,10 @@ export default function BlogPostList({
                   })}
                   <span className="mx-2">·</span>
                   {post._count.comments} 条评论
-                  {(post._count as any).likes > 0 && (
+                  {post._count.likes > 0 && (
                     <>
                       <span className="mx-2">·</span>
-                      {(post._count as any).likes} 个赞
+                      {post._count.likes} 个赞
                     </>
                   )}
                 </p>
@@ -85,13 +85,13 @@ export default function BlogPostList({
                     {post.content.replace(/[#*`>\[\]()!\-_~]/g, "").slice(0, 150)}
                   </p>
                 )}
-                {(post as any).tags?.length > 0 && (
+                {post.tags && post.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-3">
-                    {(post as any).tags.slice(0, 4).map((pt: { tag: { id: string; name: string } }) => (
+                    {post.tags.slice(0, 4).map((pt) => (
                       <TagBadge key={pt.tag.id} name={pt.tag.name} />
                     ))}
-                    {(post as any).tags.length > 4 && (
-                      <span className="text-xs text-gray-400 self-center">+{(post as any).tags.length - 4}</span>
+                    {post.tags.length > 4 && (
+                      <span className="text-xs text-gray-400 self-center">+{post.tags.length - 4}</span>
                     )}
                   </div>
                 )}
