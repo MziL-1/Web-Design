@@ -3,6 +3,7 @@
 import Link from "next/link";
 import BlogPostContent from "@/components/blog/BlogPostContent";
 import CommentSection from "@/components/blog/CommentSection";
+import LikeButton from "@/components/blog/LikeButton";
 import { ToastProvider } from "@/components/ui/Toast";
 
 interface PostData {
@@ -26,9 +27,11 @@ interface Props {
   username: string;
   postId: string;
   currentUsername?: string;
+  likeCount?: number;
+  liked?: boolean;
 }
 
-export default function PostPageClient({ post, comments, isOwner, username, postId, currentUsername }: Props) {
+export default function PostPageClient({ post, comments, isOwner, username, postId, currentUsername, likeCount = 0, liked = false }: Props) {
   return (
     <ToastProvider>
       <div className="mx-auto max-w-2xl">
@@ -50,6 +53,10 @@ export default function PostPageClient({ post, comments, isOwner, username, post
 
         <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <BlogPostContent content={post.content} />
+        </div>
+
+        <div className="mt-4">
+          <LikeButton postId={postId} initialLiked={liked} initialCount={likeCount} />
         </div>
 
         <CommentSection

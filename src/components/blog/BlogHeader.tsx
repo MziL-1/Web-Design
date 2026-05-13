@@ -1,8 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Button from "@/components/ui/Button";
+import FollowButton from "./FollowButton";
+import TagBadge from "./TagBadge";
+import ProfileDetailModal from "./ProfileDetailModal";
 
 interface BlogHeaderProps {
+  username: string;
   displayName: string;
   bio: string | null;
   avatarUrl: string | null;
@@ -11,9 +16,12 @@ interface BlogHeaderProps {
   onEditProfile: () => void;
   onTogglePublished: () => void;
   toggling: boolean;
+  tags?: Array<{ tag: { id: string; name: string } }>;
+  isFollowing?: boolean;
 }
 
 export default function BlogHeader({
+  username,
   displayName,
   bio,
   avatarUrl,
@@ -22,7 +30,11 @@ export default function BlogHeader({
   onEditProfile,
   onTogglePublished,
   toggling,
+  tags = [],
+  isFollowing = false,
 }: BlogHeaderProps) {
+  const [detailOpen, setDetailOpen] = useState(false);
+
   return (
     <div>
       {isOwner && (
@@ -54,17 +66,46 @@ export default function BlogHeader({
         <div className="flex-1">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold">{displayName}</h1>
-              {bio && <p className="mt-2 max-w-xl text-neutral-muted">{bio}</p>}
+              <button
+                onClick={() => setDetailOpen(true)}
+                className="text-left hover:opacity-80 transition-opacity"
+              >
+                <h1 className="text-3xl font-bold">{displayName}</h1>
+              </button>
+              {bio && <p className="mt-1 text-sm text-neutral-muted line-clamp-1">{bio}</p>}
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {tags.slice(0, 2).map((pt) => (
+                    <TagBadge key={pt.tag.id} name={pt.tag.name} />
+                  ))}
+                  {tags.length > 2 && (
+                    <span className="text-xs text-zinc-400 self-center">+{tags.length - 2}</span>
+                  )}
+                </div>
+              )}
             </div>
-            {isOwner && (
-              <Button variant="secondary" size="sm" onClick={onEditProfile}>
-                编辑个人信息
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {isOwner ? (
+                <Button variant="secondary" size="sm" onClick={onEditProfile}>
+                  编辑个人信息
+                </Button>
+              ) : (
+                <FollowButton
+                  username={username}
+                  initialIsFollowing={isFollowing}
+                  isOwnProfile={false}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      <ProfileDetailModal
+        username={username}
+        isOpen={detailOpen}
+        onClose={() => setDetailOpen(false)}
+      />
     </div>
   );
 }

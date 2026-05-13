@@ -32,7 +32,9 @@ export default async function BlogPage({ params }: Props) {
 
   const user = await prisma.user.findUnique({
     where: { username },
-    include: { profile: true },
+    include: {
+      profile: { include: { tags: { include: { tag: true } } } },
+    },
   });
 
   if (!user) notFound();
@@ -65,12 +67,32 @@ export default async function BlogPage({ params }: Props) {
     orderBy: { createdAt: "desc" },
   });
 
+  let isFollowing = false;
+  if (session?.user?.id && !isOwner) {
+    const follow = await prisma.follow.findUnique({
+      where: {
+        followerId_followingId: {
+          followerId: session.user.id,
+          followingId: user.id,
+        },
+      },
+    });
+    isFollowing = !!follow;
+  }
+
   return (
     <BlogPageClient
       username={username}
-      profile={user.profile!}
+      profile={{
+        displayName: user.profile!.displayName,
+        bio: user.profile!.bio,
+        avatarUrl: user.profile!.avatarUrl,
+        sitePublished: user.profile!.sitePublished,
+        tags: user.profile!.tags,
+      }}
       posts={posts.map((p) => ({ ...p, createdAt: p.createdAt.toISOString() }))}
       isOwner={isOwner}
+      isFollowing={isFollowing}
     />
   );
 }

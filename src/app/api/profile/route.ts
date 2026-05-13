@@ -18,8 +18,8 @@ export async function PUT(request: Request) {
   }
 
   if (body.bio !== undefined) {
-    if (typeof body.bio === "string" && body.bio.length > 500) {
-      return NextResponse.json({ error: "简介不能超过500字符" }, { status: 400 });
+    if (typeof body.bio === "string" && body.bio.length > 50) {
+      return NextResponse.json({ error: "简介不能超过50字符" }, { status: 400 });
     }
     data.bio = body.bio;
   }
@@ -51,6 +51,18 @@ export async function PUT(request: Request) {
     where: { userId: session.user.id },
     data,
   });
+
+  if (body.tagIds !== undefined && Array.isArray(body.tagIds)) {
+    if (body.tagIds.length > 6) {
+      return NextResponse.json({ error: "最多选择6个标签" }, { status: 400 });
+    }
+    await prisma.profileTag.deleteMany({ where: { profileId: profile.id } });
+    if (body.tagIds.length > 0) {
+      await prisma.profileTag.createMany({
+        data: body.tagIds.map((tagId: string) => ({ profileId: profile.id, tagId })),
+      });
+    }
+  }
 
   return NextResponse.json(profile);
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
+import TagSelector from "@/components/blog/TagSelector";
 
 interface EditProfileModalProps {
   open: boolean;
@@ -11,6 +12,7 @@ interface EditProfileModalProps {
   initialName: string;
   initialBio: string;
   initialAvatarUrl: string | null;
+  initialTagIds?: string[];
   onSaved: () => void;
 }
 
@@ -20,11 +22,13 @@ export default function EditProfileModal({
   initialName,
   initialBio,
   initialAvatarUrl,
+  initialTagIds = [],
   onSaved,
 }: EditProfileModalProps) {
   const [displayName, setDisplayName] = useState(initialName);
   const [bio, setBio] = useState(initialBio);
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl ?? "");
+  const [tagIds, setTagIds] = useState<string[]>(initialTagIds);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
@@ -32,11 +36,9 @@ export default function EditProfileModal({
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setUploading(true);
     const form = new FormData();
     form.append("file", file);
-
     const res = await fetch("/api/upload", { method: "POST", body: form });
     if (res.ok) {
       const data = await res.json();
@@ -52,7 +54,6 @@ export default function EditProfileModal({
   const handleSave = async () => {
     if (!displayName.trim()) return;
     setSaving(true);
-
     const res = await fetch("/api/profile", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -60,9 +61,9 @@ export default function EditProfileModal({
         displayName: displayName.trim(),
         bio: bio.trim() || null,
         avatarUrl: avatarUrl || null,
+        tagIds,
       }),
     });
-
     if (res.ok) {
       toast("个人信息已更新");
       onSaved();
@@ -114,17 +115,19 @@ export default function EditProfileModal({
         </div>
 
         <div>
-          <label htmlFor="bio" className="mb-1 block text-sm font-medium">个人简介</label>
+          <label htmlFor="bio" className="mb-1 block text-sm font-medium">个人简介 (最多 50 字)</label>
           <textarea
             id="bio"
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            maxLength={500}
-            rows={3}
+            maxLength={50}
+            rows={2}
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
-          <p className="mt-1 text-xs text-neutral-muted">{bio.length}/500</p>
+          <p className="mt-1 text-xs text-neutral-muted">{bio.length}/50</p>
         </div>
+
+        <TagSelector selectedTagIds={tagIds} onChange={setTagIds} />
 
         <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={onClose}>取消</Button>

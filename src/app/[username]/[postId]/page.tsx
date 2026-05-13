@@ -32,6 +32,15 @@ export default async function PostPage({ params }: Props) {
   const session = await auth();
   const isOwner = session?.user?.username === username;
 
+  const likeCount = await prisma.like.count({ where: { postId } });
+  let liked = false;
+  if (session?.user?.id) {
+    const like = await prisma.like.findUnique({
+      where: { userId_postId: { userId: session.user.id, postId } },
+    });
+    liked = !!like;
+  }
+
   const comments = await prisma.comment.findMany({
     where: { postId },
     orderBy: { createdAt: "desc" },
@@ -53,6 +62,8 @@ export default async function PostPage({ params }: Props) {
       username={username}
       postId={postId}
       currentUsername={session?.user?.username}
+      likeCount={likeCount}
+      liked={liked}
     />
   );
 }

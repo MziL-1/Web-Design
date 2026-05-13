@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import Link from "next/link";
 import BlogPostCard from "@/components/blog/BlogPostCard";
 import type { Metadata } from "next";
+import HomePageClient from "./HomePageClient";
 
 export const metadata: Metadata = {
   title: "发现博客",
@@ -20,42 +21,35 @@ export default async function HomePage() {
           _count: { select: { posts: { where: { published: true } } } },
         },
       },
+      tags: { include: { tag: true } },
     },
     orderBy: { updatedAt: "desc" },
     take: 12,
   });
 
-  const actionHref = session?.user?.username ? `/${session.user.username}` : "/register";
-  const actionLabel = session?.user?.username ? "开始写博客" : "成为第一个";
+  let followingIds: string[] = [];
+  if (session?.user?.id) {
+    const following = await prisma.follow.findMany({
+      where: { followerId: session.user.id },
+      select: { followingId: true },
+    });
+    followingIds = following.map((f) => f.followingId);
+  }
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">发现博客</h1>
-        <p className="mt-2 text-neutral-muted">浏览最新发布的个人博客</p>
-      </div>
-
-      {profiles.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 py-20">
-          <p className="text-lg text-neutral-muted">还没有人发布博客</p>
-          <Link href={actionHref} className="mt-4 rounded-lg bg-primary px-6 py-2 text-white hover:bg-primary/90">
-            {actionLabel}
-          </Link>
-        </div>
-      ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {profiles.map((p) => (
-            <Link key={p.id} href={`/${p.user.username}`}>
-              <BlogPostCard
-                title={p.displayName}
-                description={p.bio ?? undefined}
-                avatarUrl={p.avatarUrl ?? undefined}
-                postCount={p.user._count.posts}
-              />
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
+    <HomePageClient
+      sessionUsername={session?.user?.username ?? null}
+      loggedIn={!!session}
+      profiles={profiles.map((p) => ({
+        id: p.id,
+        username: p.user.username,
+        displayName: p.displayName,
+        bio: p.bio,
+        avatarUrl: p.avatarUrl,
+        postCount: p.user._count.posts,
+        tags: p.tags,
+        isFollowing: followingIds.includes(p.userId),
+      }))}
+    />
   );
 }

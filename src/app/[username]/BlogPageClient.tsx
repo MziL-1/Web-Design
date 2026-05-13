@@ -18,12 +18,14 @@ interface Props {
     bio: string | null;
     avatarUrl: string | null;
     sitePublished: boolean;
+    tags: Array<{ tag: { id: string; name: string } }>;
   };
   posts: PostItem[];
   isOwner: boolean;
+  isFollowing: boolean;
 }
 
-function BlogPageClientInner({ username, profile, posts: initialPosts, isOwner }: Props) {
+function BlogPageClientInner({ username, profile, posts: initialPosts, isOwner, isFollowing }: Props) {
   const router = useRouter();
   const { toast } = useToast();
   const [posts, setPosts] = useState(initialPosts);
@@ -88,6 +90,7 @@ function BlogPageClientInner({ username, profile, posts: initialPosts, isOwner }
         &larr; 发现更多博客
       </Link>
       <BlogHeader
+        username={username}
         displayName={profile.displayName}
         bio={profile.bio}
         avatarUrl={profile.avatarUrl}
@@ -96,6 +99,8 @@ function BlogPageClientInner({ username, profile, posts: initialPosts, isOwner }
         onEditProfile={() => setShowProfileModal(true)}
         onTogglePublished={handleTogglePublished}
         toggling={toggling}
+        tags={profile.tags}
+        isFollowing={isFollowing}
       />
 
       <BlogPostList
@@ -113,6 +118,7 @@ function BlogPageClientInner({ username, profile, posts: initialPosts, isOwner }
         initialName={profile.displayName}
         initialBio={profile.bio ?? ""}
         initialAvatarUrl={profile.avatarUrl}
+        initialTagIds={profile.tags.map((pt) => pt.tag.id)}
         onSaved={handleRefresh}
       />
 
