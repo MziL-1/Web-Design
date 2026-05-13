@@ -7,7 +7,8 @@ export async function GET(req: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: "未登录" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
-  const page = parseInt(searchParams.get("page") || "1");
+  const pageRaw = parseInt(searchParams.get("page") || "1");
+  const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1;
   const limit = 12;
   const skip = (page - 1) * limit;
 

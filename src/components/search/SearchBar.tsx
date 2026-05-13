@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useAppStore } from "@/lib/store";
@@ -13,6 +13,7 @@ export default function SearchBar() {
   const [results, setResults] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedQuery(localQuery), 300);
@@ -20,16 +21,32 @@ export default function SearchBar() {
   }, [localQuery]);
 
   useEffect(() => {
+    abortRef.current?.abort();
+
     if (!debouncedQuery || debouncedQuery.length < 1) {
       setResults(null);
       setShowResults(false);
       return;
     }
+
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoading(true);
-    fetch(`/api/search?q=${encodeURIComponent(debouncedQuery)}`)
+
+    fetch(`/api/search?q=${encodeURIComponent(debouncedQuery)}`, { signal: controller.signal })
       .then((r) => r.json())
-      .then((data) => { setResults(data); setShowResults(true); setLoading(false); })
-      .catch(() => setLoading(false));
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setResults(data);
+          setShowResults(true);
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") {
+          setLoading(false);
+        }
+      });
   }, [debouncedQuery]);
 
   useEffect(() => {

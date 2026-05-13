@@ -67,7 +67,7 @@ export default function FileImportDropzone({ onFileParsed }: FileImportDropzoneP
         <input
           ref={fileInputRef}
           type="file"
-          accept=".md,.docx,.doc,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"
+          accept=".md,.docx,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           onChange={handleFileSelect}
           className="hidden"
         />

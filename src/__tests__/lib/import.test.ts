@@ -27,12 +27,6 @@ describe("validateImportFile", () => {
     const result = validateImportFile(file);
     expect(result.valid).toBe(true);
   });
-
-  it("accepts .doc files", () => {
-    const file = new File([], "notes.doc", { type: "application/msword" });
-    const result = validateImportFile(file);
-    expect(result.valid).toBe(true);
-  });
 });
 
 describe("parseMarkdown", () => {

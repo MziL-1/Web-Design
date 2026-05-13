@@ -33,7 +33,7 @@ export async function parseDocx(file: File): Promise<ImportResult> {
 
 export function validateImportFile(file: File): { valid: boolean; error?: string } {
   const MAX_SIZE = 10 * 1024 * 1024;
-  const ALLOWED_EXTENSIONS = ['.md', '.docx', '.doc'];
+  const ALLOWED_EXTENSIONS = ['.md', '.docx'];
   const ext = '.' + file.name.split('.').pop()?.toLowerCase();
   if (!ALLOWED_EXTENSIONS.includes(ext)) {
     return { valid: false, error: `Unsupported format: ${ext}. Allowed: .md, .docx, .doc` };
