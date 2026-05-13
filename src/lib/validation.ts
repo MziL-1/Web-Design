@@ -37,3 +37,10 @@ export function validateLength(
 export function validateField(value: unknown, label: string, min: number, max: number): string {
   return validateLength(value, label, min, max);
 }
+
+export function validateTagName(name: unknown): string {
+  if (typeof name !== "string") return "标签名必须是字符串";
+  if (name.length < 1 || name.length > 30) return "标签名长度需在1-30字符";
+  if (!/^[a-zA-Z0-9\u4e00-\u9fff\s._-]+$/.test(name)) return "标签名包含无效字符";
+  return "";
+}

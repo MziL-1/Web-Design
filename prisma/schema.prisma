@@ -15,6 +15,9 @@ model User {
   createdAt DateTime @default(now())
   profile   Profile?
   posts     Post[]
+  following Follow[]  @relation("Following")
+  followers Follow[]  @relation("Followers")
+  likes     Like[]
 }
 
 model Profile {
@@ -24,8 +27,9 @@ model Profile {
   displayName   String
   bio           String?
   avatarUrl     String?
-  sitePublished Boolean  @default(false)
-  createdAt     DateTime @default(now())
+  sitePublished Boolean     @default(false)
+  tags          ProfileTag[]
+  createdAt     DateTime    @default(now())
   updatedAt     DateTime @updatedAt
 }
 
@@ -39,6 +43,8 @@ model Post {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   comments  Comment[]
+  tags      PostTag[]
+  likes     Like[]
 }
 
 model Comment {
@@ -57,4 +63,47 @@ model RateLimit {
   createdAt DateTime @default(now())
 
   @@index([ip, action, createdAt])
+}
+
+model Tag {
+  id       String       @id @default(cuid())
+  name     String       @unique
+  posts    PostTag[]
+  profiles ProfileTag[]
+}
+
+model PostTag {
+  postId String
+  tagId  String
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([postId, tagId])
+}
+
+model ProfileTag {
+  profileId String
+  tagId     String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([profileId, tagId])
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+  @@unique([followerId, followingId])
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@unique([userId, postId])
 }

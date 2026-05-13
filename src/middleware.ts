@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import type { NextRequest } from "next/server";
 
-const protectedPaths = ["/api/profile", "/api/posts", "/api/my-posts", "/api/upload"];
+const protectedPaths = ["/api/profile", "/api/posts", "/api/my-posts", "/api/upload", "/api/users", "/api/import", "/api/feed"];
 const needsAuth = (path: string) => {
   if (path.includes("/comments")) return false;
   return protectedPaths.some((p) => path.startsWith(p));
@@ -19,5 +19,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/api/profile/:path*", "/api/posts/:path*", "/api/my-posts", "/api/upload"],
+  matcher: ["/api/profile/:path*", "/api/posts/:path*", "/api/my-posts", "/api/upload", "/api/users/:path*", "/api/import/:path*", "/api/feed/:path*"],
 };
