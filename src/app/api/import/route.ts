@@ -1,7 +1,21 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { validateImportFile, parseMarkdown, parseDocx } from "@/lib/import";
+import mammoth from "mammoth";
+
+const ALLOWED_EXTENSIONS = [".md", ".docx"];
+const MAX_SIZE = 10 * 1024 * 1024;
+
+function validateImportFile(file: File): { valid: boolean; error?: string } {
+  const ext = "." + file.name.split(".").pop()?.toLowerCase();
+  if (!ALLOWED_EXTENSIONS.includes(ext)) {
+    return { valid: false, error: `Unsupported format: ${ext}. Allowed: .md, .docx` };
+  }
+  if (file.size > MAX_SIZE) {
+    return { valid: false, error: `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum: 10MB` };
+  }
+  return { valid: true };
+}
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -27,14 +41,29 @@ export async function POST(request: Request) {
     }
 
     const ext = "." + file.name.split(".").pop()?.toLowerCase();
-    let result;
+    let content: string;
+    let warnings: string[] = [];
+
     if (ext === ".md") {
-      result = await parseMarkdown(file);
+      content = await file.text();
     } else {
-      result = await parseDocx(file);
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const result = await mammoth.extractRawText({ buffer });
+      content = result.value;
+      if (result.messages.length > 0) {
+        warnings = result.messages.map((m) => `Parse note: ${m.message}`);
+      }
     }
 
-    return NextResponse.json(result);
+    const wordCount = content.split(/\s+/).filter(Boolean).length;
+
+    return NextResponse.json({
+      content,
+      filename: file.name,
+      wordCount,
+      warnings,
+    });
   } catch (error) {
     console.error("Import failed:", error);
     return NextResponse.json({ error: "文件解析失败" }, { status: 500 });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Editor, rootCtx, defaultValueCtx, editorViewCtx } from '@milkdown/kit/core';
 import { commonmark } from '@milkdown/kit/preset/commonmark';
 import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react';
@@ -16,6 +16,7 @@ function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProp
   const [ready, setReady] = useState(false);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const previousValueRef = useRef(initialValue);
 
   const editorInfo = useEditor(
     (root) =>
@@ -32,10 +33,27 @@ function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProp
 
   useEffect(() => {
     if (!editorInfo.loading) {
-      const timer = setTimeout(() => setReady(true), 150);
+      const timer = setTimeout(() => setReady(true), 200);
       return () => clearTimeout(timer);
     }
   }, [editorInfo.loading]);
+
+  // BUGFIX: when initialValue changes externally (e.g. file import),
+  // replace the editor content imperatively
+  useEffect(() => {
+    if (!ready || initialValue === previousValueRef.current) return;
+    const editor = editorInfo.get();
+    if (!editor) return;
+
+    previousValueRef.current = initialValue;
+    editor.action((ctx: any) => {
+      const view = ctx.get(editorViewCtx);
+      const { state } = view;
+      const node = state.schema.text(initialValue);
+      const tr = state.tr.replaceWith(0, state.doc.content.size, node);
+      view.dispatch(tr);
+    });
+  }, [initialValue, ready, editorInfo]);
 
   useEffect(() => {
     if (!ready) return;
@@ -113,6 +131,23 @@ function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProp
         .milkdown-editor .editor ul, .milkdown-editor .editor ol {
           padding-left: 1.5rem;
           margin: 0.5rem 0;
+        }
+        .milkdown-editor .editor table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 1rem 0;
+        }
+        .milkdown-editor .editor th, .milkdown-editor .editor td {
+          border: 1px solid #d4d4d8;
+          padding: 0.5rem 0.75rem;
+          text-align: left;
+        }
+        .milkdown-editor .editor th {
+          background: #f4f4f5;
+          font-weight: 600;
+        }
+        .milkdown-editor .editor tr:nth-child(even) td {
+          background: #fafafa;
         }
       `}</style>
     </div>
