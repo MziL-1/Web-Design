@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
-import Link from "next/link";
 import NavBar from "@/components/NavBar";
+import Footer from "@/components/ui/Footer";
 
 export default async function AppLayout({
   children,
@@ -12,7 +12,8 @@ export default async function AppLayout({
   return (
     <>
       <NavBar session={session} />
-      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+      <main className="mx-auto max-w-[1200px] px-6 py-8">{children}</main>
+      <Footer />
     </>
   );
 }

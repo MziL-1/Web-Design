@@ -16,11 +16,11 @@ export default function Button({
   ...props
 }: ButtonProps) {
   const base = "inline-flex items-center justify-center rounded-lg font-medium transition-all focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]";
-  const sizes = size === "sm" ? "h-8 px-3 text-sm" : "h-10 px-4";
+  const sizes = size === "sm" ? "h-8 px-3 text-sm" : "h-10 px-5 text-sm";
   const variants = {
-    primary: "bg-primary text-white hover:bg-primary/90 focus-visible:ring-primary/50",
-    secondary: "border border-slate-300 text-neutral hover:bg-slate-50 focus-visible:ring-primary/50",
-    danger: "bg-error text-white hover:bg-error/90 focus-visible:ring-error/50",
+    primary: "bg-gray-950 text-white hover:bg-gray-600",
+    secondary: "bg-gray-50 text-gray-950 border border-gray-200 hover:border-gray-400",
+    danger: "bg-red-600 text-white hover:bg-red-700",
   };
 
   return (

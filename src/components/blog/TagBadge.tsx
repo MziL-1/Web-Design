@@ -4,7 +4,7 @@ interface TagBadgeProps {
 
 export default function TagBadge({ name }: TagBadgeProps) {
   return (
-    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs text-gray-600 bg-gray-50 border border-gray-200">
       {name}
     </span>
   );

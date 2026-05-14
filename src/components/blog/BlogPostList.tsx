@@ -15,6 +15,10 @@ interface BlogPostListProps {
   onDeletePost: (post: PostItem) => void;
 }
 
+function stripMarkdown(text: string): string {
+  return text.replace(/[#*`>\[\]()!\-_~=+|{}.]/g, "").replace(/\n+/g, " ").trim();
+}
+
 export default function BlogPostList({
   posts,
   isOwner,
@@ -28,10 +32,12 @@ export default function BlogPostList({
   if (posts.length === 0) {
     return (
       <div className="mt-8">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">文章</h2>
-          {isOwner && <Button size="sm" onClick={onNewPost}>写文章</Button>}
-        </div>
+        {isOwner && (
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="font-display text-2xl font-medium text-gray-950">文章</h2>
+            <Button size="sm" onClick={onNewPost}>写文章</Button>
+          </div>
+        )}
         <EmptyState
           message={isOwner ? "还没有文章，点击「写文章」开始创作" : "这个博客还没有文章"}
           actionLabel={isOwner ? "写文章" : undefined}
@@ -43,74 +49,79 @@ export default function BlogPostList({
 
   return (
     <div className="mt-8">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-semibold">文章 ({posts.length})</h2>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="font-display text-2xl font-medium text-gray-950">文章 ({posts.length})</h2>
         {isOwner && <Button size="sm" onClick={onNewPost}>写文章</Button>}
       </div>
 
-      <div className="space-y-4">
+      <div className="flex flex-col gap-12">
         {posts.map((post) => (
-          <div
+          <article
             key={post.id}
-            onClick={() => router.push(`/${username}/${post.id}`)}
-            className={`cursor-pointer rounded-xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:border-gray-200 ${
+            className={`pb-12 border-b border-gray-200 last:border-b-0 ${
               !post.published ? "opacity-60" : ""
             }`}
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors">
-                  {post.title}
+            <div className="grid grid-cols-[1fr] md:grid-cols-[1fr_200px] gap-8">
+              <div className="flex flex-col">
+                <div className="flex items-center gap-3 mb-3 flex-wrap">
+                  <span className="text-sm text-gray-400">
+                    {new Date(post.createdAt).toLocaleDateString("zh-CN", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </span>
                   {!post.published && (
-                    <span className="ml-2 text-xs text-amber-600 font-normal">(草稿)</span>
+                    <span className="text-xs text-amber-600">(草稿)</span>
                   )}
+                </div>
+
+                <h3
+                  onClick={() => router.push(`/${username}/${post.id}`)}
+                  className="font-display text-[22px] font-medium leading-tight text-gray-950 cursor-pointer hover:text-blue-600 transition-colors mb-3"
+                >
+                  {post.title}
                 </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  {new Date(post.createdAt).toLocaleDateString("zh-CN", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                  <span className="mx-2">·</span>
-                  {post._count.comments} 条评论
-                  {post._count.likes > 0 && (
-                    <>
-                      <span className="mx-2">·</span>
-                      {post._count.likes} 个赞
-                    </>
-                  )}
-                </p>
+
                 {post.content && (
-                  <p className="mt-2 text-sm text-gray-500 line-clamp-2">
-                    {post.content.replace(/[#*`>\[\]()!\-_~]/g, "").slice(0, 150)}
+                  <p className="text-[15px] leading-relaxed text-gray-600 mb-4 line-clamp-2">
+                    {stripMarkdown(post.content).slice(0, 160)}
                   </p>
                 )}
-                {post.tags && post.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-3">
-                    {post.tags.slice(0, 4).map((pt) => (
-                      <TagBadge key={pt.tag.id} name={pt.tag.name} />
-                    ))}
-                    {post.tags.length > 4 && (
-                      <span className="text-xs text-gray-400 self-center">+{post.tags.length - 4}</span>
-                    )}
-                  </div>
-                )}
+
+                <div className="flex items-center gap-4 mt-auto flex-wrap">
+                  {post.tags && post.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {post.tags.map((pt) => (
+                        <TagBadge key={pt.tag.id} name={pt.tag.name} />
+                      ))}
+                    </div>
+                  )}
+                  <span className="flex items-center gap-1.5 text-sm text-gray-400">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                    {post._count.likes} 点赞
+                  </span>
+                </div>
               </div>
+
               {isOwner && (
                 <div
-                  className="flex gap-2 shrink-0"
+                  className="flex md:flex-col gap-2 md:justify-center md:items-end"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <Button variant="secondary" size="sm" onClick={() => onEditPost(post)} aria-label={`编辑文章 ${post.title}`}>
+                  <Button variant="secondary" size="sm" onClick={() => onEditPost(post)}>
                     编辑
                   </Button>
-                  <Button variant="danger" size="sm" onClick={() => onDeletePost(post)} aria-label={`删除文章 ${post.title}`}>
+                  <Button variant="danger" size="sm" onClick={() => onDeletePost(post)}>
                     删除
                   </Button>
                 </div>
               )}
             </div>
-          </div>
+          </article>
         ))}
       </div>
     </div>

@@ -31,13 +31,13 @@ export default function FollowButton({ username, initialIsFollowing, isOwnProfil
     <button
       onClick={handleToggle}
       disabled={loading}
-      className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 ${
+      className={`rounded-lg px-6 py-2.5 text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
         isFollowing
-          ? "bg-zinc-200 text-zinc-700 hover:bg-zinc-300"
-          : "border-2 border-primary text-primary hover:bg-primary/5"
-      } disabled:opacity-50 disabled:cursor-not-allowed`}
+          ? "bg-gray-50 text-gray-600 border border-gray-200"
+          : "border-2 border-blue-600 text-blue-600 bg-transparent hover:bg-blue-600 hover:text-white"
+      }`}
     >
-      {loading ? "..." : isFollowing ? "已关注" : "+ 关注"}
+      {loading ? "..." : isFollowing ? "已关注" : "关注"}
     </button>
   );
 }
