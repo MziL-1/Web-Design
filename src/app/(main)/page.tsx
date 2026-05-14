@@ -1,7 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import Link from "next/link";
-import BlogPostCard from "@/components/blog/BlogPostCard";
 import type { Metadata } from "next";
 import HomePageClient from "./HomePageClient";
 

@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAppStore } from "@/lib/store";
+import { useRouter } from "next/navigation";
 import BlogPostCard from "@/components/blog/BlogPostCard";
+import TagBadge from "@/components/blog/TagBadge";
 
 interface ProfileData {
   id: string;
@@ -31,24 +34,134 @@ function stripMarkdown(text: string): string {
 }
 
 export default function HomePageClient({ sessionUsername, loggedIn, profiles }: Props) {
+  const router = useRouter();
+  const urlSearchParams = useSearchParams();
+  const searchQuery = urlSearchParams.get("q");
   const activeTab = useAppStore((s) => s.activeTab);
   const setActiveTab = useAppStore((s) => s.setActiveTab);
   const [feedPosts, setFeedPosts] = useState<any[]>([]);
   const [feedLoading, setFeedLoading] = useState(false);
   const [feedFetched, setFeedFetched] = useState(false);
+  const [searchResults, setSearchResults] = useState<{ users: any[]; posts: any[]; tags: any[] } | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   useEffect(() => {
-    if (activeTab === "following" && loggedIn && !feedFetched) {
+    if (activeTab === "following" && loggedIn && !feedFetched && !searchQuery) {
       setFeedLoading(true);
       fetch("/api/feed")
         .then((r) => r.json())
         .then((data) => { setFeedPosts(data.posts || []); setFeedFetched(true); })
         .finally(() => setFeedLoading(false));
     }
-  }, [activeTab, loggedIn, feedFetched]);
+  }, [activeTab, loggedIn, feedFetched, searchQuery]);
+
+  useEffect(() => {
+    if (searchQuery) {
+      setSearchLoading(true);
+      fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`)
+        .then((r) => r.json())
+        .then((data) => setSearchResults(data))
+        .finally(() => setSearchLoading(false));
+    } else {
+      setSearchResults(null);
+    }
+  }, [searchQuery]);
 
   const actionHref = sessionUsername ? `/${sessionUsername}` : "/register";
   const actionLabel = sessionUsername ? "开始写博客" : "成为第一个";
+
+  if (searchQuery) {
+    return (
+      <div>
+        <div className="mb-8">
+          <Link href="/" className="text-sm text-gray-400 hover:text-gray-950 transition-colors">
+            &larr; 返回首页
+          </Link>
+          <p className="mt-2 text-lg text-gray-950">
+            搜索：<span className="font-medium">"{searchQuery}"</span>
+          </p>
+        </div>
+
+        {searchLoading ? (
+          <div className="flex flex-col gap-8">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-24 bg-gray-50 animate-pulse rounded-xl" />
+            ))}
+          </div>
+        ) : !searchResults ? null : (
+          <>
+            {searchResults.users.length === 0 && searchResults.posts.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 py-20">
+                <p className="text-lg text-gray-400">没有找到相关内容</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-10">
+                {searchResults.users.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4 pb-2 border-b border-gray-200">
+                      用户
+                    </h3>
+                    <div className="flex flex-col gap-3">
+                      {searchResults.users.map((u: any) => (
+                        <Link
+                          key={u.id}
+                          href={`/${u.username}`}
+                          className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group cursor-pointer"
+                        >
+                          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                            {u.profile?.avatarUrl ? (
+                              <img src={u.profile.avatarUrl} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              <span className="text-sm font-medium text-gray-600">{u.username[0].toUpperCase()}</span>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <span className="font-medium text-gray-950">
+                              {u.profile?.displayName || u.username}
+                            </span>
+                            {u.profile?.bio && (
+                              <p className="text-xs text-gray-400 line-clamp-1">{u.profile.bio}</p>
+                            )}
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {searchResults.posts.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-4 pb-2 border-b border-gray-200">
+                      文章
+                    </h3>
+                    <div className="flex flex-col gap-12">
+                      {searchResults.posts.map((item: any) => (
+                        <Link
+                          key={item.id}
+                          href={`/${item.user?.username || ''}/${item.id}`}
+                          className="group cursor-pointer pb-12 border-b border-gray-200 last:border-b-0"
+                        >
+                          <BlogPostCard
+                            title={item.title}
+                            description={item.content ? stripMarkdown(item.content).slice(0, 160) : undefined}
+                            authorName={item.user?.profile?.displayName || item.user?.username}
+                            authorAvatar={item.user?.profile?.avatarUrl}
+                            imageUrl={item.coverImage}
+                            date={new Date(item.createdAt).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+                            tags={item.tags}
+                          />
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div>
