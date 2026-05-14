@@ -10,43 +10,63 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const session = await auth();
-  const profiles = await prisma.profile.findMany({
-    where: { sitePublished: true },
-    include: {
-      user: {
-        select: {
-          username: true,
-          _count: { select: { posts: { where: { published: true } } } },
-        },
-      },
+
+  const posts = await prisma.post.findMany({
+    where: { published: true },
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      coverImage: true,
+      createdAt: true,
+      _count: { select: { comments: true, likes: true } },
+      user: { select: { username: true, profile: { select: { displayName: true, avatarUrl: true } } } },
       tags: { include: { tag: true } },
     },
-    orderBy: { updatedAt: "desc" },
-    take: 12,
+    orderBy: { createdAt: "desc" },
+    take: 20,
   });
 
-  let followingIds: string[] = [];
+  let followingProfiles: any[] = [];
   if (session?.user?.id) {
     const following = await prisma.follow.findMany({
       where: { followerId: session.user.id },
       select: { followingId: true },
     });
-    followingIds = following.map((f) => f.followingId);
+    const followingIds = following.map((f) => f.followingId);
+
+    if (followingIds.length > 0) {
+      followingProfiles = await prisma.profile.findMany({
+        where: { userId: { in: followingIds } },
+        include: {
+          user: {
+            select: {
+              username: true,
+              _count: { select: { posts: { where: { published: true } } } },
+            },
+          },
+          tags: { include: { tag: true } },
+        },
+      });
+    }
   }
 
   return (
     <HomePageClient
       sessionUsername={session?.user?.username ?? null}
       loggedIn={!!session}
-      profiles={profiles.map((p) => ({
-        id: p.id,
-        username: p.user.username,
-        displayName: p.displayName,
-        bio: p.bio,
-        avatarUrl: p.avatarUrl,
-        postCount: p.user._count.posts,
-        tags: p.tags,
-        isFollowing: followingIds.includes(p.userId),
+      discoverPosts={posts.map((p) => ({
+        ...p,
+        createdAt: p.createdAt.toISOString(),
+      }))}
+      followingProfiles={followingProfiles.map((fp) => ({
+        id: fp.id,
+        username: fp.user.username,
+        displayName: fp.displayName,
+        bio: fp.bio,
+        avatarUrl: fp.avatarUrl,
+        postCount: fp.user._count.posts,
+        tags: fp.tags,
       }))}
     />
   );

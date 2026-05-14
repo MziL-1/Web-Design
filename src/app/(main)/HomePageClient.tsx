@@ -2,13 +2,22 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAppStore } from "@/lib/store";
-import { useRouter } from "next/navigation";
 import BlogPostCard from "@/components/blog/BlogPostCard";
-import TagBadge from "@/components/blog/TagBadge";
 
-interface ProfileData {
+interface DiscoverPost {
+  id: string;
+  title: string;
+  content: string;
+  coverImage: string | null;
+  createdAt: string;
+  _count: { comments: number; likes: number };
+  user: { username: string; profile: { displayName: string; avatarUrl: string | null } | null };
+  tags: Array<{ tag: { id: string; name: string } }>;
+}
+
+interface FollowingProfile {
   id: string;
   username: string;
   displayName: string;
@@ -16,13 +25,13 @@ interface ProfileData {
   avatarUrl: string | null;
   postCount: number;
   tags: Array<{ tag: { id: string; name: string } }>;
-  isFollowing: boolean;
 }
 
 interface Props {
   sessionUsername: string | null;
   loggedIn: boolean;
-  profiles: ProfileData[];
+  discoverPosts: DiscoverPost[];
+  followingProfiles: FollowingProfile[];
 }
 
 function stripMarkdown(text: string): string {
@@ -33,27 +42,14 @@ function stripMarkdown(text: string): string {
     .trim();
 }
 
-export default function HomePageClient({ sessionUsername, loggedIn, profiles }: Props) {
+export default function HomePageClient({ sessionUsername, loggedIn, discoverPosts, followingProfiles }: Props) {
   const router = useRouter();
   const urlSearchParams = useSearchParams();
   const searchQuery = urlSearchParams.get("q");
   const activeTab = useAppStore((s) => s.activeTab);
   const setActiveTab = useAppStore((s) => s.setActiveTab);
-  const [feedPosts, setFeedPosts] = useState<any[]>([]);
-  const [feedLoading, setFeedLoading] = useState(false);
-  const [feedFetched, setFeedFetched] = useState(false);
   const [searchResults, setSearchResults] = useState<{ users: any[]; posts: any[]; tags: any[] } | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
-
-  useEffect(() => {
-    if (activeTab === "following" && loggedIn && !feedFetched && !searchQuery) {
-      setFeedLoading(true);
-      fetch("/api/feed")
-        .then((r) => r.json())
-        .then((data) => { setFeedPosts(data.posts || []); setFeedFetched(true); })
-        .finally(() => setFeedLoading(false));
-    }
-  }, [activeTab, loggedIn, feedFetched, searchQuery]);
 
   useEffect(() => {
     if (searchQuery) {
@@ -106,22 +102,17 @@ export default function HomePageClient({ sessionUsername, loggedIn, profiles }: 
                         <Link
                           key={u.id}
                           href={`/${u.username}`}
-                          className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group cursor-pointer"
+                          className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
                         >
                           <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                            {u.profile?.avatarUrl ? (
-                              <img src={u.profile.avatarUrl} alt="" className="h-full w-full object-cover" />
+                            {u.avatarUrl ? (
+                              <img src={u.avatarUrl} alt="" className="h-full w-full object-cover" />
                             ) : (
                               <span className="text-sm font-medium text-gray-600">{u.username[0].toUpperCase()}</span>
                             )}
                           </div>
                           <div className="flex-1">
-                            <span className="font-medium text-gray-950">
-                              {u.profile?.displayName || u.username}
-                            </span>
-                            {u.profile?.bio && (
-                              <p className="text-xs text-gray-400 line-clamp-1">{u.profile.bio}</p>
-                            )}
+                            <span className="font-medium text-gray-950">{u.displayName}</span>
                           </div>
                         </Link>
                       ))}
@@ -193,40 +184,36 @@ export default function HomePageClient({ sessionUsername, loggedIn, profiles }: 
       )}
 
       {activeTab === "discover" ? (
-        profiles.length === 0 ? (
+        discoverPosts.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 py-20">
-            <p className="text-lg text-gray-400">还没有人发布博客</p>
+            <p className="text-lg text-gray-400">还没有人发布文章</p>
             <Link href={actionHref} className="mt-4 rounded-lg bg-gray-950 px-6 py-2.5 text-sm font-medium text-white hover:bg-gray-600 transition-colors">
               {actionLabel}
             </Link>
           </div>
         ) : (
           <div className="flex flex-col gap-12">
-            {profiles.map((p) => (
+            {discoverPosts.map((item) => (
               <Link
-                key={p.id}
-                href={`/${p.username}`}
+                key={item.id}
+                href={`/${item.user.username}/${item.id}`}
                 className="group cursor-pointer pb-12 border-b border-gray-200 last:border-b-0"
               >
                 <BlogPostCard
-                  title={p.displayName}
-                  description={p.bio ?? undefined}
-                  authorAvatar={p.avatarUrl ?? undefined}
-                  stats={[{ label: "篇文章", value: String(p.postCount) }]}
-                  tags={p.tags}
-                  isFollowing={p.isFollowing}
+                  title={item.title}
+                  description={item.content ? stripMarkdown(item.content).slice(0, 160) : undefined}
+                  authorName={item.user.profile?.displayName || item.user.username}
+                  authorAvatar={item.user.profile?.avatarUrl ?? undefined}
+                  imageUrl={item.coverImage ?? undefined}
+                  date={new Date(item.createdAt).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+                  stats={[{ label: "点赞", value: String(item._count.likes) }]}
+                  tags={item.tags}
                 />
               </Link>
             ))}
           </div>
         )
-      ) : feedLoading ? (
-        <div className="flex flex-col gap-8">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 bg-gray-50 animate-pulse rounded-xl" />
-          ))}
-        </div>
-      ) : feedPosts.length === 0 ? (
+      ) : followingProfiles.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 py-20">
           <p className="text-lg text-gray-400">还没有关注任何人</p>
           <button
@@ -238,21 +225,19 @@ export default function HomePageClient({ sessionUsername, loggedIn, profiles }: 
         </div>
       ) : (
         <div className="flex flex-col gap-12">
-          {feedPosts.map((item: any) => (
+          {followingProfiles.map((fp) => (
             <Link
-              key={item.id}
-              href={`/${item.user.username}/${item.id}`}
+              key={fp.id}
+              href={`/${fp.username}`}
               className="group cursor-pointer pb-12 border-b border-gray-200 last:border-b-0"
             >
               <BlogPostCard
-                title={item.title}
-                description={item.content ? stripMarkdown(item.content).slice(0, 160) : undefined}
-                authorName={item.user.profile?.displayName || item.user.username}
-                authorAvatar={item.user.profile?.avatarUrl ?? undefined}
-                imageUrl={item.coverImage ?? undefined}
-                date={new Date(item.createdAt).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
-                stats={[{ label: "点赞", value: String(item._count?.likes || 0) }]}
-                tags={item.tags}
+                title={fp.displayName}
+                description={fp.bio ?? undefined}
+                authorAvatar={fp.avatarUrl ?? undefined}
+                stats={[{ label: "篇文章", value: String(fp.postCount) }]}
+                tags={fp.tags}
+                isFollowing={true}
               />
             </Link>
           ))}

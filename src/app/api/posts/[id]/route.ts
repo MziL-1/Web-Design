@@ -50,22 +50,23 @@ export async function PUT(
   }
 
   const content = body.content as string;
-  let coverImage: string | null = undefined as any;
+  const hasCover = body.coverImage !== undefined;
+  const coverImage = hasCover
+    ? (typeof body.coverImage === "string" && body.coverImage
+        ? body.coverImage
+        : extractFirstImage(content))
+    : undefined;
 
-  if (body.coverImage !== undefined) {
-    coverImage = typeof body.coverImage === "string" && body.coverImage
-      ? body.coverImage
-      : extractFirstImage(content);
-  }
+  const data: any = {
+    title: body.title,
+    content,
+    published: body.published,
+  };
+  if (hasCover) data.coverImage = coverImage;
 
   const updated = await prisma.post.update({
     where: { id },
-    data: {
-      title: body.title,
-      content,
-      ...(coverImage !== undefined ? { coverImage } : {}),
-      published: body.published,
-    },
+    data,
   });
 
   return NextResponse.json(updated);
