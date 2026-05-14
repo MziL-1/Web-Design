@@ -165,9 +165,6 @@ export default function HomePageClient({ sessionUsername, loggedIn, discoverPost
             }`}
           >
             发现博客
-            {activeTab === "discover" && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 transition-all duration-300" />
-            )}
           </button>
           <button
             onClick={() => setActiveTab("following")}
@@ -176,10 +173,14 @@ export default function HomePageClient({ sessionUsername, loggedIn, discoverPost
             }`}
           >
             我的关注
-            {activeTab === "following" && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 transition-all duration-300" />
-            )}
           </button>
+          <span
+            className="absolute bottom-0 h-0.5 bg-blue-600 transition-all duration-300 ease-in-out"
+            style={{
+              left: activeTab === "discover" ? "0px" : "88px",
+              width: "56px",
+            }}
+          />
         </div>
       )}
 
