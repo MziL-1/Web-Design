@@ -3,6 +3,11 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validateField } from "@/lib/validation";
 
+function extractFirstImage(content: string): string | null {
+  const match = content.match(/!\[.*?\]\((\S+?)\)/);
+  return match ? match[1] : null;
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -44,12 +49,21 @@ export async function PUT(
     return NextResponse.json({ error: "文章内容不能超过50000字符" }, { status: 400 });
   }
 
+  const content = body.content as string;
+  let coverImage: string | null = undefined as any;
+
+  if (body.coverImage !== undefined) {
+    coverImage = typeof body.coverImage === "string" && body.coverImage
+      ? body.coverImage
+      : extractFirstImage(content);
+  }
+
   const updated = await prisma.post.update({
     where: { id },
     data: {
       title: body.title,
-      content: body.content,
-      coverImage: body.coverImage !== undefined ? (typeof body.coverImage === "string" ? body.coverImage : null) : undefined,
+      content,
+      ...(coverImage !== undefined ? { coverImage } : {}),
       published: body.published,
     },
   });

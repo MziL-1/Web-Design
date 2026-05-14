@@ -3,6 +3,11 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validateField } from "@/lib/validation";
 
+function extractFirstImage(content: string): string | null {
+  const match = content.match(/!\[.*?\]\((\S+?)\)/);
+  return match ? match[1] : null;
+}
+
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "未登录" }, { status: 401 });
@@ -20,7 +25,10 @@ export async function POST(request: Request) {
     data: {
       title: body.title,
       content: body.content ?? "",
-      coverImage: typeof body.coverImage === "string" ? body.coverImage : null,
+      coverImage:
+        typeof body.coverImage === "string" && body.coverImage
+          ? body.coverImage
+          : extractFirstImage(body.content ?? ""),
       published: body.published ?? true,
       userId: session.user.id,
     },

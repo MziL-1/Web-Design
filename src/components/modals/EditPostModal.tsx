@@ -102,7 +102,7 @@ export default function EditPostModal({ open, onClose, post, onSaved }: EditPost
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">配图（选填）</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">封面图（选填，不填则取正文第一张图）</label>
             <div className="flex items-center gap-3">
               {coverImage ? (
                 <div className="relative group">
