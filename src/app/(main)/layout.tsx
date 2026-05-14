@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { auth } from "@/lib/auth";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/ui/Footer";
+import StarField from "@/components/ui/StarField";
 
 function NavBarFallback() {
   return (
@@ -23,12 +24,15 @@ export default async function AppLayout({
   const session = await auth();
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Suspense fallback={<NavBarFallback />}>
-        <NavBar session={session} />
-      </Suspense>
-      <main className="mx-auto w-full max-w-[1200px] flex-1 px-6 py-8">{children}</main>
-      <Footer />
+    <div className="relative flex min-h-screen flex-col">
+      <StarField />
+      <div className="relative z-10 flex min-h-screen flex-col">
+        <Suspense fallback={<NavBarFallback />}>
+          <NavBar session={session} />
+        </Suspense>
+        <main className="mx-auto w-full max-w-[1200px] flex-1 px-6 py-8">{children}</main>
+        <Footer />
+      </div>
     </div>
   );
 }
