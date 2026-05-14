@@ -206,7 +206,7 @@ export default function HomePageClient({ sessionUsername, loggedIn, discoverPost
                   authorAvatar={item.user.profile?.avatarUrl ?? undefined}
                   imageUrl={item.coverImage ?? undefined}
                   date={new Date(item.createdAt).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
-                  stats={[{ label: "点赞", value: String(item._count.likes) }]}
+                  stats={[{ label: "点赞", value: String(item._count.likes) }, { label: "条评论", value: String(item._count.comments) }]}
                   tags={item.tags}
                 />
               </Link>
@@ -232,8 +232,9 @@ export default function HomePageClient({ sessionUsername, loggedIn, discoverPost
               className="group cursor-pointer pb-12 border-b border-gray-200 last:border-b-0"
             >
               <BlogPostCard
-                title={fp.displayName}
+                title=""
                 description={fp.bio ?? undefined}
+                authorName={fp.displayName}
                 authorAvatar={fp.avatarUrl ?? undefined}
                 stats={[{ label: "篇文章", value: String(fp.postCount) }]}
                 tags={fp.tags}

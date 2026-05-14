@@ -57,9 +57,11 @@ export default function BlogPostCard({
           </div>
         )}
 
-        <h2 className="font-display text-[22px] font-medium leading-tight text-gray-950 group-hover:text-blue-600 transition-colors mb-3">
-          {title}
-        </h2>
+        {title !== undefined && title !== "" && (
+          <h2 className="font-display text-[22px] font-medium leading-tight text-gray-950 group-hover:text-blue-600 transition-colors mb-3">
+            {title}
+          </h2>
+        )}
 
         {description && (
           <p className="text-[15px] leading-relaxed text-gray-600 mb-4 line-clamp-2">
