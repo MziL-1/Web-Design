@@ -31,6 +31,7 @@ function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProp
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const previousValueRef = useRef(initialValue);
+  const internalUpdateRef = useRef(false);
 
   const editorInfo = useEditor(
     (root) =>
@@ -53,11 +54,20 @@ function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProp
   }, [editorInfo.loading]);
 
   useEffect(() => {
-    if (!ready || initialValue === previousValueRef.current) return;
+    if (!ready) return;
+
+    if (internalUpdateRef.current) {
+      internalUpdateRef.current = false;
+      previousValueRef.current = initialValue;
+      return;
+    }
+
+    if (initialValue === previousValueRef.current) return;
+    previousValueRef.current = initialValue;
+
     const editor = editorInfo.get();
     if (!editor) return;
 
-    previousValueRef.current = initialValue;
     editor.action((ctx: any) => {
       const view = ctx.get(editorViewCtx);
       const { state } = view;
@@ -74,9 +84,9 @@ function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProp
     editor.action((ctx: any) => {
       const view = ctx.get(editorViewCtx);
       const { state } = view;
+      const from = state.selection.from;
       const imageNode = state.schema.nodes.image.create({ src: url, alt: '' });
-      let tr = state.tr.insert(state.selection.from, imageNode);
-      tr = tr.insert(state.selection.from + 1, state.schema.text(' '));
+      const tr = state.tr.insert(from, imageNode);
       view.dispatch(tr);
       view.focus();
     });
@@ -112,6 +122,8 @@ function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProp
     const onInput = () => {
       const fn = onChangeRef.current;
       if (!fn) return;
+
+      internalUpdateRef.current = true;
 
       editor.action((ctx: any) => {
         fn(getMarkdown()(ctx));
