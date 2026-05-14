@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
     where: { userId: { in: followingIds }, published: true },
     include: {
       user: { include: { profile: true } },
+      tags: { include: { tag: true } },
       _count: { select: { comments: true, likes: true } },
     },
     orderBy: { createdAt: "desc" },

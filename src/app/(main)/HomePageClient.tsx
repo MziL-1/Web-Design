@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAppStore } from "@/lib/store";
-import { useRouter } from "next/navigation";
 import BlogPostCard from "@/components/blog/BlogPostCard";
-import TagBadge from "@/components/blog/TagBadge";
 
 interface ProfileData {
   id: string;
@@ -29,7 +27,6 @@ function stripMarkdown(text: string): string {
 }
 
 export default function HomePageClient({ sessionUsername, loggedIn, profiles }: Props) {
-  const router = useRouter();
   const activeTab = useAppStore((s) => s.activeTab);
   const setActiveTab = useAppStore((s) => s.setActiveTab);
   const [feedPosts, setFeedPosts] = useState<any[]>([]);
@@ -87,14 +84,18 @@ export default function HomePageClient({ sessionUsername, loggedIn, profiles }: 
             </Link>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-12">
             {profiles.map((p) => (
-              <Link key={p.id} href={`/${p.username}`}>
+              <Link
+                key={p.id}
+                href={`/${p.username}`}
+                className="group cursor-pointer pb-12 border-b border-gray-200 last:border-b-0"
+              >
                 <BlogPostCard
                   title={p.displayName}
                   description={p.bio ?? undefined}
-                  avatarUrl={p.avatarUrl ?? undefined}
-                  postCount={p.postCount}
+                  authorAvatar={p.avatarUrl ?? undefined}
+                  stats={[{ label: "篇文章", value: String(p.postCount) }]}
                   tags={p.tags}
                   isFollowing={p.isFollowing}
                 />
@@ -121,59 +122,21 @@ export default function HomePageClient({ sessionUsername, loggedIn, profiles }: 
       ) : (
         <div className="flex flex-col gap-12">
           {feedPosts.map((item: any) => (
-            <article
+            <Link
               key={item.id}
-              className="pb-12 border-b border-gray-200 last:border-b-0 cursor-pointer"
-              onClick={() => router.push(`/${item.user.username}/${item.id}`)}
+              href={`/${item.user.username}/${item.id}`}
+              className="group cursor-pointer pb-12 border-b border-gray-200 last:border-b-0"
             >
-              <div className="flex flex-col">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200">
-                    {item.user.profile?.avatarUrl ? (
-                      <img src={item.user.profile.avatarUrl} alt={item.user.username} className="h-full w-full object-cover" />
-                    ) : (
-                      <span className="text-xs font-medium text-gray-600">{item.user.username[0].toUpperCase()}</span>
-                    )}
-                  </div>
-                  <Link
-                    href={`/${item.user.username}`}
-                    className="text-sm font-medium text-gray-950 hover:text-blue-600"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {item.user.profile?.displayName || item.user.username}
-                  </Link>
-                  <span className="text-sm text-gray-400">
-                    {new Date(item.createdAt).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
-                  </span>
-                </div>
-
-                <h2 className="font-display text-[22px] font-medium leading-tight text-gray-950 hover:text-blue-600 transition-colors mb-3">
-                  {item.title}
-                </h2>
-
-                {item.content && (
-                  <p className="text-[15px] leading-relaxed text-gray-600 mb-4 line-clamp-2">
-                    {stripMarkdown(item.content).slice(0, 160)}
-                  </p>
-                )}
-
-                <div className="flex items-center gap-3 flex-wrap">
-                  {item.tags && item.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {item.tags.slice(0, 3).map((pt: any) => (
-                        <TagBadge key={pt.tag.id} name={pt.tag.name} />
-                      ))}
-                    </div>
-                  )}
-                  <span className="flex items-center gap-1.5 text-sm text-gray-400">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                    </svg>
-                    {item._count?.likes || 0} 点赞
-                  </span>
-                </div>
-              </div>
-            </article>
+              <BlogPostCard
+                title={item.title}
+                description={item.content ? stripMarkdown(item.content).slice(0, 160) : undefined}
+                authorName={item.user.profile?.displayName || item.user.username}
+                authorAvatar={item.user.profile?.avatarUrl ?? undefined}
+                date={new Date(item.createdAt).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+                stats={[{ label: "点赞", value: String(item._count?.likes || 0) }]}
+                tags={item.tags}
+              />
+            </Link>
           ))}
         </div>
       )}
