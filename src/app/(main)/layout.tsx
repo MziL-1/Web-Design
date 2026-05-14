@@ -10,10 +10,10 @@ export default async function AppLayout({
   const session = await auth();
 
   return (
-    <>
+    <div className="flex min-h-screen flex-col">
       <NavBar session={session} />
-      <main className="mx-auto max-w-[1200px] px-6 py-8">{children}</main>
+      <main className="mx-auto w-full max-w-[1200px] flex-1 px-6 py-8">{children}</main>
       <Footer />
-    </>
+    </div>
   );
 }
