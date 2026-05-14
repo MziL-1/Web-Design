@@ -6,6 +6,7 @@ import { commonmark } from '@milkdown/kit/preset/commonmark';
 import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react';
 import { gfm } from '@milkdown/kit/preset/gfm';
 import { history } from '@milkdown/kit/plugin/history';
+import { getMarkdown } from '@milkdown/utils';
 
 interface MarkdownEditorProps {
   initialValue?: string;
@@ -30,21 +31,6 @@ function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProp
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const previousValueRef = useRef(initialValue);
-  const toastRef = useRef<((msg: string, type?: 'error') => void) | null>(null);
-
-  const handleImagePaste = useCallback(async (file: File, view: any) => {
-    const url = await uploadImage(file);
-    if (!url) {
-      toastRef.current?.('图片上传失败', 'error');
-      return;
-    }
-    const { state } = view;
-    const { from } = state.selection;
-    const node = state.schema.text(`![image](${url})`);
-    const tr = state.tr.insert(from, node);
-    view.dispatch(tr);
-    view.focus();
-  }, []);
 
   const editorInfo = useEditor(
     (root) =>
@@ -81,6 +67,40 @@ function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProp
     });
   }, [initialValue, ready, editorInfo]);
 
+  const insertImageAtCursor = useCallback((url: string) => {
+    const editor = editorInfo.get();
+    if (!editor) return;
+
+    editor.action((ctx: any) => {
+      const view = ctx.get(editorViewCtx);
+      const { state } = view;
+      const imageNode = state.schema.nodes.image.create({ src: url, alt: '' });
+      let tr = state.tr.insert(state.selection.from, imageNode);
+      tr = tr.insert(state.selection.from + 1, state.schema.text(' '));
+      view.dispatch(tr);
+      view.focus();
+    });
+  }, [editorInfo]);
+
+  const handlePaste = useCallback(async (e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    let imageFile: File | null = null;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) {
+        imageFile = items[i].getAsFile();
+        break;
+      }
+    }
+    if (!imageFile) return;
+
+    e.preventDefault();
+    const url = await uploadImage(imageFile);
+    if (!url) return;
+    insertImageAtCursor(url);
+  }, [insertImageAtCursor]);
+
   useEffect(() => {
     if (!ready) return;
     const editor = editorInfo.get();
@@ -94,38 +114,17 @@ function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProp
       if (!fn) return;
 
       editor.action((ctx: any) => {
-        const v = ctx.get(editorViewCtx);
-        fn(v.state.doc.textContent.trim());
-      });
-    };
-
-    const onPaste = (e: ClipboardEvent) => {
-      const items = e.clipboardData?.items;
-      if (!items) return;
-
-      let imageFile: File | null = null;
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.startsWith('image/')) {
-          imageFile = items[i].getAsFile();
-          break;
-        }
-      }
-      if (!imageFile) return;
-
-      e.preventDefault();
-      editor.action((ctx: any) => {
-        const v = ctx.get(editorViewCtx);
-        handleImagePaste(imageFile!, v);
+        fn(getMarkdown()(ctx));
       });
     };
 
     view.dom.addEventListener('input', onInput);
-    view.dom.addEventListener('paste', onPaste);
+    view.dom.addEventListener('paste', handlePaste);
     return () => {
       view.dom.removeEventListener('input', onInput);
-      view.dom.removeEventListener('paste', onPaste);
+      view.dom.removeEventListener('paste', handlePaste);
     };
-  }, [ready, editorInfo, handleImagePaste]);
+  }, [ready, editorInfo, handlePaste]);
 
   return (
     <div className="milkdown-editor border border-zinc-200 rounded-lg overflow-hidden">

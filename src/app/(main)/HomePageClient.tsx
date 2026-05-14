@@ -23,7 +23,11 @@ interface Props {
 }
 
 function stripMarkdown(text: string): string {
-  return text.replace(/[#*`>\[\]()!\-_~=+|{}.]/g, "").replace(/\n+/g, " ").trim();
+  return text
+    .replace(/!\[.*?\]\(.*?\)/g, '')
+    .replace(/[#*`>\[\]()!\-_~=+|{}.]/g, '')
+    .replace(/\n+/g, ' ')
+    .trim();
 }
 
 export default function HomePageClient({ sessionUsername, loggedIn, profiles }: Props) {
