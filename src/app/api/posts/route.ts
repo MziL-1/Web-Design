@@ -20,6 +20,7 @@ export async function POST(request: Request) {
     data: {
       title: body.title,
       content: body.content ?? "",
+      coverImage: typeof body.coverImage === "string" ? body.coverImage : null,
       published: body.published ?? true,
       userId: session.user.id,
     },

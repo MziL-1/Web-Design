@@ -60,6 +60,7 @@ export default async function BlogPage({ params }: Props) {
       id: true,
       title: true,
       content: true,
+      coverImage: true,
       published: true,
       createdAt: true,
       _count: { select: { comments: true, likes: true } },

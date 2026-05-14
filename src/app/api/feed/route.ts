@@ -24,8 +24,13 @@ export async function GET(req: NextRequest) {
 
   const posts = await prisma.post.findMany({
     where: { userId: { in: followingIds }, published: true },
-    include: {
-      user: { include: { profile: true } },
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      coverImage: true,
+      createdAt: true,
+      user: { select: { username: true, profile: { select: { displayName: true, avatarUrl: true } } } },
       tags: { include: { tag: true } },
       _count: { select: { comments: true, likes: true } },
     },

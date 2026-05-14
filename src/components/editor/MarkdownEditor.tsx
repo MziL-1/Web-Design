@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Editor, rootCtx, defaultValueCtx, editorViewCtx } from '@milkdown/kit/core';
 import { commonmark } from '@milkdown/kit/preset/commonmark';
 import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react';
@@ -12,11 +12,39 @@ interface MarkdownEditorProps {
   onChange?: (markdown: string) => void;
 }
 
+async function uploadImage(file: File): Promise<string | null> {
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const res = await fetch('/api/upload', { method: 'POST', body: form });
+    if (res.ok) {
+      const data = await res.json();
+      return data.url;
+    }
+  } catch {}
+  return null;
+}
+
 function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProps) {
   const [ready, setReady] = useState(false);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const previousValueRef = useRef(initialValue);
+  const toastRef = useRef<((msg: string, type?: 'error') => void) | null>(null);
+
+  const handleImagePaste = useCallback(async (file: File, view: any) => {
+    const url = await uploadImage(file);
+    if (!url) {
+      toastRef.current?.('图片上传失败', 'error');
+      return;
+    }
+    const { state } = view;
+    const { from } = state.selection;
+    const node = state.schema.text(`![image](${url})`);
+    const tr = state.tr.insert(from, node);
+    view.dispatch(tr);
+    view.focus();
+  }, []);
 
   const editorInfo = useEditor(
     (root) =>
@@ -38,8 +66,6 @@ function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProp
     }
   }, [editorInfo.loading]);
 
-  // BUGFIX: when initialValue changes externally (e.g. file import),
-  // replace the editor content imperatively
   useEffect(() => {
     if (!ready || initialValue === previousValueRef.current) return;
     const editor = editorInfo.get();
@@ -60,27 +86,46 @@ function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProp
     const editor = editorInfo.get();
     if (!editor) return;
 
+    const view = editor.ctx.get(editorViewCtx) as any;
+    if (!view?.dom) return;
+
     const onInput = () => {
       const fn = onChangeRef.current;
       if (!fn) return;
 
       editor.action((ctx: any) => {
-        const view = ctx.get(editorViewCtx);
-        let text = '';
-        view.state.doc.descendants((node: any) => {
-          if (node.isText) text += node.text;
-          if (node.isBlock) text += '\n';
-        });
-        fn(text.trim());
+        const v = ctx.get(editorViewCtx);
+        fn(v.state.doc.textContent.trim());
       });
     };
 
-    const view = editor.ctx.get(editorViewCtx);
-    if (view?.dom) {
-      view.dom.addEventListener('input', onInput);
-      return () => view.dom.removeEventListener('input', onInput);
-    }
-  }, [ready, editorInfo]);
+    const onPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      let imageFile: File | null = null;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) {
+          imageFile = items[i].getAsFile();
+          break;
+        }
+      }
+      if (!imageFile) return;
+
+      e.preventDefault();
+      editor.action((ctx: any) => {
+        const v = ctx.get(editorViewCtx);
+        handleImagePaste(imageFile!, v);
+      });
+    };
+
+    view.dom.addEventListener('input', onInput);
+    view.dom.addEventListener('paste', onPaste);
+    return () => {
+      view.dom.removeEventListener('input', onInput);
+      view.dom.removeEventListener('paste', onPaste);
+    };
+  }, [ready, editorInfo, handleImagePaste]);
 
   return (
     <div className="milkdown-editor border border-zinc-200 rounded-lg overflow-hidden">

@@ -2,6 +2,7 @@ export interface PostItem {
   id: string;
   title: string;
   content?: string;
+  coverImage?: string | null;
   published: boolean;
   createdAt: string;
   _count: { comments: number; likes: number };
@@ -12,5 +13,6 @@ export interface PostEditData {
   id: string;
   title: string;
   content: string;
+  coverImage?: string | null;
   published: boolean;
 }

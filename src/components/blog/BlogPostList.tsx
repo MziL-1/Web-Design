@@ -69,6 +69,7 @@ export default function BlogPostList({
                   title={post.title}
                   description={post.content ? stripMarkdown(post.content).slice(0, 160) : undefined}
                   date={new Date(post.createdAt).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+                  imageUrl={post.coverImage ?? undefined}
                   stats={[
                     { label: "点赞", value: String(post._count.likes) },
                     { label: "条评论", value: String(post._count.comments) },

@@ -79,7 +79,7 @@ function BlogPageClientInner({ username, profile, posts: initialPosts, isOwner, 
     }
   };
 
-  const handlePostCreated = (post: { id: string; title: string; content: string; createdAt: string; _count: { comments: number; likes: number } }) => {
+  const handlePostCreated = (post: { id: string; title: string; content: string; coverImage?: string | null; createdAt: string; _count: { comments: number; likes: number } }) => {
     setPosts((prev) => [{ ...post, published: true }, ...prev]);
     router.refresh();
   };
@@ -111,7 +111,7 @@ function BlogPageClientInner({ username, profile, posts: initialPosts, isOwner, 
         isOwner={isOwner}
         username={username}
         onNewPost={() => setShowCreateModal(true)}
-        onEditPost={(post) => setEditingPost({ id: post.id, title: post.title, content: post.content ?? "", published: post.published })}
+        onEditPost={(post) => setEditingPost({ id: post.id, title: post.title, content: post.content ?? "", coverImage: post.coverImage, published: post.published })}
         onDeletePost={handleDeletePost}
       />
 

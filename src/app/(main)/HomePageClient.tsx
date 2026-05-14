@@ -132,6 +132,7 @@ export default function HomePageClient({ sessionUsername, loggedIn, profiles }: 
                 description={item.content ? stripMarkdown(item.content).slice(0, 160) : undefined}
                 authorName={item.user.profile?.displayName || item.user.username}
                 authorAvatar={item.user.profile?.avatarUrl ?? undefined}
+                imageUrl={item.coverImage ?? undefined}
                 date={new Date(item.createdAt).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
                 stats={[{ label: "点赞", value: String(item._count?.likes || 0) }]}
                 tags={item.tags}

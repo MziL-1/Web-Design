@@ -46,7 +46,12 @@ export async function PUT(
 
   const updated = await prisma.post.update({
     where: { id },
-    data: { title: body.title, content: body.content, published: body.published },
+    data: {
+      title: body.title,
+      content: body.content,
+      coverImage: body.coverImage !== undefined ? (typeof body.coverImage === "string" ? body.coverImage : null) : undefined,
+      published: body.published,
+    },
   });
 
   return NextResponse.json(updated);
