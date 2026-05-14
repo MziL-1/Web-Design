@@ -37,7 +37,6 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
     <div className="mx-auto mt-20 max-w-sm">
       <h1 className="mb-6 text-center text-2xl font-bold">创建账号</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -101,7 +100,6 @@ export default function RegisterPage() {
         已有账号？{" "}
         <Link href="/login" className="text-primary hover:underline">登录</Link>
       </p>
-    </div>
     </div>
   );
 }

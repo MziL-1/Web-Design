@@ -34,7 +34,6 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
     <div className="mx-auto mt-20 max-w-sm">
       <h1 className="mb-6 text-center text-2xl font-bold">登录</h1>
 
@@ -84,7 +83,6 @@ export default function LoginForm() {
         还没有账号？{" "}
         <Link href="/register" className="text-primary hover:underline">注册</Link>
       </p>
-    </div>
     </div>
   );
 }
