@@ -19,21 +19,23 @@ export default async function HomePage() {
       content: true,
       coverImage: true,
       createdAt: true,
+      userId: true,
       _count: { select: { comments: true, likes: true } },
       user: { select: { username: true, profile: { select: { displayName: true, avatarUrl: true } } } },
       tags: { include: { tag: true } },
     },
     orderBy: { createdAt: "desc" },
-    take: 20,
+    take: 50,
   });
 
+  let followingIds: string[] = [];
   let followingProfiles: any[] = [];
   if (session?.user?.id) {
     const following = await prisma.follow.findMany({
       where: { followerId: session.user.id },
       select: { followingId: true },
     });
-    const followingIds = following.map((f) => f.followingId);
+    followingIds = following.map((f) => f.followingId);
 
     if (followingIds.length > 0) {
       followingProfiles = await prisma.profile.findMany({
@@ -58,6 +60,7 @@ export default async function HomePage() {
       discoverPosts={posts.map((p) => ({
         ...p,
         createdAt: p.createdAt.toISOString(),
+        isFollowing: followingIds.includes(p.userId),
       }))}
       followingProfiles={followingProfiles.map((fp) => ({
         id: fp.id,

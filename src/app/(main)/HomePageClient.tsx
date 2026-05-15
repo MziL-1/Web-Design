@@ -15,6 +15,7 @@ interface DiscoverPost {
   _count: { comments: number; likes: number };
   user: { username: string; profile: { displayName: string; avatarUrl: string | null } | null };
   tags: Array<{ tag: { id: string; name: string } }>;
+  isFollowing: boolean;
 }
 
 interface FollowingProfile {
@@ -34,12 +35,80 @@ interface Props {
   followingProfiles: FollowingProfile[];
 }
 
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+
 function stripMarkdown(text: string): string {
   return text
     .replace(/!\[.*?\]\(.*?\)/g, '')
     .replace(/[#*`>\[\]()!\-_~=+|{}.]/g, '')
     .replace(/\n+/g, ' ')
     .trim();
+}
+
+function Pagination({
+  currentPage,
+  totalPages,
+  pageSize,
+  onPageChange,
+  onSizeChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onSizeChange: (size: number) => void;
+}) {
+  if (totalPages <= 1 && PAGE_SIZE_OPTIONS.length <= 1) return null;
+
+  return (
+    <div className="flex items-center justify-between mt-8 pt-4 border-t border-gray-100">
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-gray-400">每页</span>
+        <select
+          value={pageSize}
+          onChange={(e) => onSizeChange(Number(e.target.value))}
+          className="text-sm border border-gray-200 rounded-md px-2 py-1 bg-white text-gray-600 outline-none"
+        >
+          {PAGE_SIZE_OPTIONS.map((size) => (
+            <option key={size} value={size}>{size}</option>
+          ))}
+        </select>
+        <span className="text-sm text-gray-400">条</span>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage <= 1}
+            className="px-3 py-1.5 text-sm border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            上一页
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              onClick={() => onPageChange(page)}
+              className={`w-8 h-8 text-sm rounded-md transition-colors ${
+                page === currentPage
+                  ? "bg-gray-950 text-white"
+                  : "border border-gray-200 hover:bg-gray-50 text-gray-600"
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+            className="px-3 py-1.5 text-sm border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            下一页
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function HomePageClient({ sessionUsername, loggedIn, discoverPosts, followingProfiles }: Props) {
@@ -50,6 +119,19 @@ export default function HomePageClient({ sessionUsername, loggedIn, discoverPost
   const setActiveTab = useAppStore((s) => s.setActiveTab);
   const [searchResults, setSearchResults] = useState<{ users: any[]; posts: any[]; tags: any[] } | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
+
+  const [discoverPage, setDiscoverPage] = useState(1);
+  const [discoverPageSize, setDiscoverPageSize] = useState(10);
+  const [followPage, setFollowPage] = useState(1);
+  const [followPageSize, setFollowPageSize] = useState(10);
+
+  useEffect(() => {
+    setDiscoverPage(1);
+  }, [discoverPageSize]);
+
+  useEffect(() => {
+    setFollowPage(1);
+  }, [followPageSize]);
 
   useEffect(() => {
     if (searchQuery) {
@@ -65,6 +147,14 @@ export default function HomePageClient({ sessionUsername, loggedIn, discoverPost
 
   const actionHref = sessionUsername ? `/${sessionUsername}` : "/register";
   const actionLabel = sessionUsername ? "开始写博客" : "成为第一个";
+
+  const discoverStart = (discoverPage - 1) * discoverPageSize;
+  const discoverPaged = discoverPosts.slice(discoverStart, discoverStart + discoverPageSize);
+  const discoverTotalPages = Math.ceil(discoverPosts.length / discoverPageSize);
+
+  const followStart = (followPage - 1) * followPageSize;
+  const followPaged = followingProfiles.slice(followStart, followStart + followPageSize);
+  const followTotalPages = Math.ceil(followingProfiles.length / followPageSize);
 
   if (searchQuery) {
     return (
@@ -193,26 +283,36 @@ export default function HomePageClient({ sessionUsername, loggedIn, discoverPost
             </Link>
           </div>
         ) : (
-          <div className="flex flex-col gap-12">
-            {discoverPosts.map((item) => (
-              <Link
-                key={item.id}
-                href={`/${item.user.username}/${item.id}`}
-                className="group cursor-pointer pb-12 border-b border-gray-200 last:border-b-0"
-              >
-                <BlogPostCard
-                  title={item.title}
-                  description={item.content ? stripMarkdown(item.content).slice(0, 160) : undefined}
-                  authorName={item.user.profile?.displayName || item.user.username}
-                  authorAvatar={item.user.profile?.avatarUrl ?? undefined}
-                  imageUrl={item.coverImage ?? undefined}
-                  date={new Date(item.createdAt).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
-                  stats={[{ label: "点赞", value: String(item._count.likes) }, { label: "条评论", value: String(item._count.comments) }]}
-                  tags={item.tags}
-                />
-              </Link>
-            ))}
-          </div>
+          <>
+            <div className="flex flex-col gap-12">
+              {discoverPaged.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/${item.user.username}/${item.id}`}
+                  className="group cursor-pointer pb-12 border-b border-gray-200 last:border-b-0"
+                >
+                  <BlogPostCard
+                    title={item.title}
+                    description={item.content ? stripMarkdown(item.content).slice(0, 160) : undefined}
+                    authorName={item.user.profile?.displayName || item.user.username}
+                    authorAvatar={item.user.profile?.avatarUrl ?? undefined}
+                    imageUrl={item.coverImage ?? undefined}
+                    date={new Date(item.createdAt).toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" })}
+                    stats={[{ label: "点赞", value: String(item._count.likes) }, { label: "条评论", value: String(item._count.comments) }]}
+                    tags={item.tags}
+                    isFollowing={item.isFollowing}
+                  />
+                </Link>
+              ))}
+            </div>
+            <Pagination
+              currentPage={discoverPage}
+              totalPages={discoverTotalPages}
+              pageSize={discoverPageSize}
+              onPageChange={setDiscoverPage}
+              onSizeChange={setDiscoverPageSize}
+            />
+          </>
         )
       ) : followingProfiles.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 py-20">
@@ -225,25 +325,34 @@ export default function HomePageClient({ sessionUsername, loggedIn, discoverPost
           </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-12">
-          {followingProfiles.map((fp) => (
-            <Link
-              key={fp.id}
-              href={`/${fp.username}`}
-              className="group cursor-pointer pb-12 border-b border-gray-200 last:border-b-0"
-            >
-              <BlogPostCard
-                title=""
-                description={fp.bio ?? undefined}
-                authorName={fp.displayName}
-                authorAvatar={fp.avatarUrl ?? undefined}
-                stats={[{ label: "篇文章", value: String(fp.postCount) }]}
-                tags={fp.tags}
-                isFollowing={true}
-              />
-            </Link>
-          ))}
-        </div>
+        <>
+          <div className="flex flex-col gap-12">
+            {followPaged.map((fp) => (
+              <Link
+                key={fp.id}
+                href={`/${fp.username}`}
+                className="group cursor-pointer pb-12 border-b border-gray-200 last:border-b-0"
+              >
+                <BlogPostCard
+                  title=""
+                  description={fp.bio ?? undefined}
+                  authorName={fp.displayName}
+                  authorAvatar={fp.avatarUrl ?? undefined}
+                  stats={[{ label: "篇文章", value: String(fp.postCount) }]}
+                  tags={fp.tags}
+                  isFollowing={true}
+                />
+              </Link>
+            ))}
+          </div>
+          <Pagination
+            currentPage={followPage}
+            totalPages={followTotalPages}
+            pageSize={followPageSize}
+            onPageChange={setFollowPage}
+            onSizeChange={setFollowPageSize}
+          />
+        </>
       )}
     </div>
   );
