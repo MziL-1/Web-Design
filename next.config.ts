@@ -17,6 +17,18 @@ const nextConfig: NextConfig = {
       static: 180,
     },
   },
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: /prisma/,
+      };
+    }
+    return config;
+  },
+  turbopack: {
+    resolveAlias: {},
+  },
 };
 
 export default nextConfig;
