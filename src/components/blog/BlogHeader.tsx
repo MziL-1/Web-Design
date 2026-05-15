@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Button from "@/components/ui/Button";
 import FollowButton from "./FollowButton";
 import TagBadge from "./TagBadge";
 import ProfileDetailModal from "./ProfileDetailModal";
+import { MessageCircle } from "lucide-react";
 
 interface BlogHeaderProps {
   username: string;
@@ -34,6 +36,7 @@ export default function BlogHeader({
   isFollowing = false,
 }: BlogHeaderProps) {
   const [detailOpen, setDetailOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <div className="text-center pt-16 pb-12 border-b border-gray-200">
@@ -90,11 +93,20 @@ export default function BlogHeader({
               编辑个人信息
             </Button>
           ) : (
-            <FollowButton
-              username={username}
-              initialIsFollowing={isFollowing}
-              isOwnProfile={false}
-            />
+            <>
+              <FollowButton
+                username={username}
+                initialIsFollowing={isFollowing}
+                isOwnProfile={false}
+              />
+              <button
+                onClick={() => router.push(`/messages?to=${username}`)}
+                className="rounded-lg px-4 py-2.5 text-sm font-medium border-2 border-gray-900 text-gray-900 bg-transparent hover:bg-gray-900 hover:text-white transition-colors inline-flex items-center gap-1.5"
+              >
+                <MessageCircle className="w-4 h-4" />
+                私信
+              </button>
+            </>
           )}
         </div>
       </div>

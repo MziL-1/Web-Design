@@ -1,16 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { Send, Image as ImageIcon, Smile, MoreVertical } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { MOCK_CHATS, CURRENT_USER } from "@/lib/mockData";
+import { MOCK_CHATS, CURRENT_USER, Chat } from "@/lib/mockData";
 import ImageWithFallback from "@/components/figma/ImageWithFallback";
 
+function generateChatForUser(username: string): Chat {
+  return {
+    id: `dm-${username}`,
+    user: {
+      username,
+      displayName: `@${username}`,
+      avatar: "",
+    },
+    lastMessage: "开始新的对话",
+    time: "现在",
+    unread: 0,
+    messages: [],
+  };
+}
+
 export default function Messages() {
-  const [activeChatId, setActiveChatId] = useState<string | null>(MOCK_CHATS[0].id);
+  const searchParams = useSearchParams();
+  const targetUser = searchParams.get("to");
+
+  const chats = useMemo(() => {
+    if (!targetUser) return MOCK_CHATS;
+    const existing = MOCK_CHATS.find((c) => c.user.username === targetUser);
+    if (existing) return MOCK_CHATS;
+    return [generateChatForUser(targetUser), ...MOCK_CHATS];
+  }, [targetUser]);
+
+  const initialChat = useMemo(() => {
+    if (targetUser) return chats.find((c) => c.user.username === targetUser)?.id ?? null;
+    return MOCK_CHATS[0]?.id ?? null;
+  }, [chats, targetUser]);
+
+  const [activeChatId, setActiveChatId] = useState<string | null>(initialChat);
   const [messageInput, setMessageInput] = useState("");
 
-  const activeChat = MOCK_CHATS.find((c) => c.id === activeChatId);
+  const activeChat = chats.find((c) => c.id === activeChatId);
 
   return (
     <div className="max-w-6xl mx-auto h-[calc(100vh-96px)] flex border-x border-zinc-200/50 bg-white -my-8">
@@ -20,7 +51,7 @@ export default function Messages() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {MOCK_CHATS.map((chat) => (
+          {chats.map((chat) => (
             <button
               key={chat.id}
               onClick={() => setActiveChatId(chat.id)}
@@ -83,36 +114,44 @@ export default function Messages() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
-              <div className="text-center mb-4">
-                <span className="text-xs font-medium text-zinc-400 bg-zinc-100 px-3 py-1 rounded-full">
-                  今天
-                </span>
-              </div>
+              {activeChat.messages.length > 0 ? (
+                <>
+                  <div className="text-center mb-4">
+                    <span className="text-xs font-medium text-zinc-400 bg-zinc-100 px-3 py-1 rounded-full">
+                      今天
+                    </span>
+                  </div>
 
-              <AnimatePresence>
-                {activeChat.messages.map((msg) => {
-                  const isMe = msg.senderId === CURRENT_USER.username;
-                  return (
-                    <motion.div
-                      key={msg.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`flex flex-col max-w-[70%] ${isMe ? "self-end items-end" : "self-start items-start"}`}
-                    >
-                      <div
-                        className={`px-4 py-2.5 rounded-2xl ${
-                          isMe
-                            ? "bg-zinc-900 text-white rounded-br-sm"
-                            : "bg-zinc-100 text-zinc-900 rounded-bl-sm"
-                        }`}
-                      >
-                        <p className="text-sm leading-relaxed">{msg.text}</p>
-                      </div>
-                      <span className="text-xs text-zinc-400 mt-1">{msg.time}</span>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
+                  <AnimatePresence>
+                    {activeChat.messages.map((msg) => {
+                      const isMe = msg.senderId === CURRENT_USER.username;
+                      return (
+                        <motion.div
+                          key={msg.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`flex flex-col max-w-[70%] ${isMe ? "self-end items-end" : "self-start items-start"}`}
+                        >
+                          <div
+                            className={`px-4 py-2.5 rounded-2xl ${
+                              isMe
+                                ? "bg-zinc-900 text-white rounded-br-sm"
+                                : "bg-zinc-100 text-zinc-900 rounded-bl-sm"
+                            }`}
+                          >
+                            <p className="text-sm leading-relaxed">{msg.text}</p>
+                          </div>
+                          <span className="text-xs text-zinc-400 mt-1">{msg.time}</span>
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
+                </>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-zinc-400">
+                  <p className="text-sm">暂无消息记录，发送第一条消息吧</p>
+                </div>
+              )}
             </div>
 
             <div className="p-4 bg-white border-t border-zinc-200/50">
