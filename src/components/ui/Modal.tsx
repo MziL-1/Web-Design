@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface ModalProps {
   open: boolean;
@@ -16,52 +16,110 @@ const sizeClasses = {
 };
 
 export default function Modal({ open, onClose, title, children, size = "default" }: ModalProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [animating, setAnimating] = useState(false);
 
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-
     if (open) {
-      dialog.showModal();
+      setVisible(true);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setAnimating(true));
+      });
       document.body.style.overflow = "hidden";
     } else {
-      dialog.close();
+      setAnimating(false);
       document.body.style.overflow = "";
+      const timer = setTimeout(() => setVisible(false), 400);
+      return () => clearTimeout(timer);
     }
-
-    return () => {
-      document.body.style.overflow = "";
-    };
   }, [open]);
 
-  if (!open) return null;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && open) onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!visible) return null;
 
   return (
-    <dialog
-      ref={dialogRef}
-      onClose={onClose}
-      onClick={(e) => {
-        if (e.target === dialogRef.current) onClose();
-      }}
-      className={`fixed inset-0 z-50 m-auto max-h-[90vh] w-full ${sizeClasses[size]} rounded-lg bg-white p-6 shadow-xl backdrop:bg-black/50 sm:max-h-[85vh]`}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="modal-title"
     >
-      <div className="mb-4 flex items-center justify-between">
-        <h2 id="modal-title" className="text-xl font-semibold">{title}</h2>
-        <button
-          onClick={onClose}
-          className="rounded-md p-1 text-neutral-muted hover:bg-slate-100 hover:text-neutral"
-          aria-label="关闭"
-        >
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+      <div
+        className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${
+          animating ? "opacity-100" : "opacity-0"
+        }`}
+        onClick={onClose}
+      />
+
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className={`relative w-full ${sizeClasses[size]} max-h-[90vh] sm:max-h-[85vh] flex flex-col rounded-2xl bg-white shadow-2xl overflow-hidden ${animating ? "animate-modal-in" : "animate-modal-out"}`}
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+          <h2 className="text-lg font-semibold text-gray-950">{title}</h2>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            aria-label="关闭"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="overflow-y-auto flex-1">{children}</div>
       </div>
-      {children}
-    </dialog>
+
+      <style jsx global>{`
+        @keyframes modal-in {
+          0% {
+            opacity: 0;
+            transform: translateY(80px) scale(0.7) rotate(-3deg);
+            transform-origin: top left;
+          }
+          60% {
+            opacity: 1;
+            transform: translateY(-6px) scale(1.01) rotate(0.15deg);
+            transform-origin: top left;
+          }
+          80% {
+            transform: translateY(2px) scale(0.99) rotate(-0.05deg);
+            transform-origin: top left;
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1) rotate(0deg);
+            transform-origin: top left;
+          }
+        }
+
+        @keyframes modal-out {
+          0% {
+            opacity: 1;
+            transform: translateY(0) scale(1) rotate(0deg);
+            transform-origin: top left;
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(60px) scale(0.85) rotate(2deg);
+            transform-origin: top left;
+          }
+        }
+
+        .animate-modal-in {
+          animation: modal-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .animate-modal-out {
+          animation: modal-out 0.25s ease-in forwards;
+        }
+      `}</style>
+    </div>
   );
 }
