@@ -86,11 +86,13 @@ export default function BlogPostCard({
       </div>
 
       {hasImage && (
-        <img
-          src={imageUrl}
-          alt={title}
-          className="w-[200px] h-[160px] object-cover rounded-xl shrink-0"
-        />
+        <div className="overflow-hidden rounded-xl shrink-0">
+          <img
+            src={imageUrl}
+            alt={title}
+            className="w-[200px] h-56 object-cover rounded-xl transition-transform duration-300 hover:scale-110"
+          />
+        </div>
       )}
     </div>
   );
