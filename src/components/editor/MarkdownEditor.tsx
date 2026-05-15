@@ -71,9 +71,14 @@ function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProp
     editor.action((ctx: any) => {
       const view = ctx.get(editorViewCtx);
       const { state } = view;
-      const node = state.schema.text(initialValue);
-      const tr = state.tr.replaceWith(0, state.doc.content.size, node);
-      view.dispatch(tr);
+      if (!initialValue) {
+        const tr = state.tr.delete(0, state.doc.content.size);
+        view.dispatch(tr);
+      } else {
+        const node = state.schema.text(initialValue);
+        const tr = state.tr.replaceWith(0, state.doc.content.size, node);
+        view.dispatch(tr);
+      }
     });
   }, [initialValue, ready, editorInfo]);
 
