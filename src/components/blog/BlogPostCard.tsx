@@ -90,7 +90,7 @@ export default function BlogPostCard({
           <img
             src={imageUrl}
             alt={title}
-            className="w-[200px] h-56 object-cover rounded-xl transition-transform duration-300 hover:scale-110"
+            className="w-44 sm:w-52 lg:w-56 aspect-[4/3] object-cover transition-transform duration-300 hover:scale-110"
           />
         </div>
       )}
