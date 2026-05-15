@@ -1,10 +1,16 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import BlogPostContent from "@/components/blog/BlogPostContent";
-import CommentSection from "@/components/blog/CommentSection";
 import LikeButton from "@/components/blog/LikeButton";
 import { ToastProvider } from "@/components/ui/Toast";
+
+const BlogPostContent = dynamic(() => import("@/components/blog/BlogPostContent"), {
+  loading: () => <div className="h-64 bg-gray-50 animate-pulse rounded-lg" />,
+});
+const CommentSection = dynamic(() => import("@/components/blog/CommentSection"), {
+  loading: () => <div className="mt-16 h-32 bg-gray-50 animate-pulse rounded-xl" />,
+});
 
 interface PostData {
   id: string;

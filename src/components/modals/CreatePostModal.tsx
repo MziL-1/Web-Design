@@ -1,11 +1,15 @@
 "use client";
 
 import { useState, useRef } from "react";
+import dynamic from "next/dynamic";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
-import MarkdownEditor from "@/components/editor/MarkdownEditor";
 import FileImportDropzone from "@/components/editor/FileImportDropzone";
+
+const MarkdownEditor = dynamic(() => import("@/components/editor/MarkdownEditor"), {
+  loading: () => <div className="h-[300px] bg-gray-50 animate-pulse rounded-lg" />,
+});
 
 interface CreatePostModalProps {
   open: boolean;

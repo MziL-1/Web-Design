@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { signOut } from "next-auth/react";
-import CreatePostModal from "@/components/modals/CreatePostModal";
+
+const CreatePostModal = dynamic(() => import("@/components/modals/CreatePostModal"), {
+  ssr: false,
+});
 
 interface NavBarProps {
   session: {

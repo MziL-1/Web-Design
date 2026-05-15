@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ToastProvider, useToast } from "@/components/ui/Toast";
 import BlogHeader from "@/components/blog/BlogHeader";
 import BlogPostList from "@/components/blog/BlogPostList";
-import EditProfileModal from "@/components/modals/EditProfileModal";
-import CreatePostModal from "@/components/modals/CreatePostModal";
-import EditPostModal from "@/components/modals/EditPostModal";
 import type { PostItem, PostEditData } from "@/lib/types";
+
+const EditProfileModal = dynamic(() => import("@/components/modals/EditProfileModal"), { ssr: false });
+const CreatePostModal = dynamic(() => import("@/components/modals/CreatePostModal"), { ssr: false });
+const EditPostModal = dynamic(() => import("@/components/modals/EditPostModal"), { ssr: false });
 
 interface Props {
   username: string;
