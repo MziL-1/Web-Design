@@ -18,8 +18,14 @@ const sizeClasses = {
 export default function Modal({ open, onClose, title, children, size = "default" }: ModalProps) {
   const [visible, setVisible] = useState(false);
   const [animating, setAnimating] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
     if (open) {
       setVisible(true);
       requestAnimationFrame(() => {
@@ -29,14 +35,25 @@ export default function Modal({ open, onClose, title, children, size = "default"
     } else {
       setAnimating(false);
       document.body.style.overflow = "";
-      const timer = setTimeout(() => setVisible(false), 400);
-      return () => clearTimeout(timer);
+      timerRef.current = setTimeout(() => {
+        timerRef.current = null;
+        setVisible(false);
+      }, 400);
     }
+
+    return () => {
+      document.body.style.overflow = "";
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [open]);
 
   useEffect(() => {
+    if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && open) onClose();
+      if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
