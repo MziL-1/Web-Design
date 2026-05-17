@@ -17,7 +17,8 @@ model User {
   posts     Post[]
   following Follow[]  @relation("Following")
   followers Follow[]  @relation("Followers")
-  likes     Like[]
+  likes           Like[]
+  siteDeployment  SiteDeployment?
 }
 
 model Profile {
@@ -107,4 +108,20 @@ model Like {
   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
   post      Post @relation(fields: [postId], references: [id], onDelete: Cascade)
   @@unique([userId, postId])
+}
+
+model SiteDeployment {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  templateId     String
+  deployHookUrl  String
+  siteUrl        String?
+  lastSyncAt     DateTime?
+  lastSyncStatus String    @default("none")
+  lastSyncError  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([userId])
 }
