@@ -15,9 +15,9 @@ const mockDeployment = {
 
 const mockPrisma = {
   siteDeployment: {
-    findUnique: vi.fn(),
-    upsert: vi.fn(),
-    delete: vi.fn(),
+    findUnique: vi.fn() as any,
+    upsert: vi.fn() as any,
+    delete: vi.fn() as any,
   },
 };
 

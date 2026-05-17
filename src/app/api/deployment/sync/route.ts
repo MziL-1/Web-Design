@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { triggerDeploy } from "@/lib/sync";
 
-export async function POST() {
+export async function POST(_request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });

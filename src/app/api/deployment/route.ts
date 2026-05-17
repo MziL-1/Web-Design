@@ -43,7 +43,7 @@ export async function PUT(request: Request) {
   return NextResponse.json(deployment);
 }
 
-export async function GET() {
+export async function GET(_request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
@@ -56,7 +56,7 @@ export async function GET() {
   return NextResponse.json(deployment);
 }
 
-export async function DELETE() {
+export async function DELETE(_request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
