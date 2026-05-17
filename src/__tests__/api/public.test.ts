@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockPrisma = {
   user: { findUnique: vi.fn() },
+  post: { findFirst: vi.fn() },
 };
 
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
@@ -130,6 +131,57 @@ describe("GET /api/public/posts/[username]", () => {
     const { GET } = await import("@/app/api/public/posts/[username]/route");
     const req = new Request("http://localhost/api/public/posts/nobody");
     const res = await GET(req, { params: Promise.resolve({ username: "nobody" }) });
+
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("GET /api/public/posts/[username]/[postId]", () => {
+  it("returns full post content for published post", async () => {
+    mockPrisma.user.findUnique.mockResolvedValueOnce({ id: "u1" });
+    mockPrisma.post.findFirst.mockResolvedValueOnce({
+      id: "p1",
+      title: "My First Post",
+      content: "# Hello\nWorld",
+      coverImage: "https://example.com/cover.jpg",
+      createdAt: new Date("2026-01-01"),
+      user: { username: "alice" },
+    });
+
+    const { GET } = await import("@/app/api/public/posts/[username]/[postId]/route");
+    const req = new Request("http://localhost/api/public/posts/alice/p1");
+    const res = await GET(req, {
+      params: Promise.resolve({ username: "alice", postId: "p1" }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.title).toBe("My First Post");
+    expect(body.content).toBe("# Hello\nWorld");
+    expect(res.headers.get("Cache-Control")).toContain("s-maxage=60");
+  });
+
+  it("returns 404 for unpublished post", async () => {
+    mockPrisma.user.findUnique.mockResolvedValueOnce({ id: "u1" });
+    mockPrisma.post.findFirst.mockResolvedValueOnce(null);
+
+    const { GET } = await import("@/app/api/public/posts/[username]/[postId]/route");
+    const req = new Request("http://localhost/api/public/posts/alice/draft");
+    const res = await GET(req, {
+      params: Promise.resolve({ username: "alice", postId: "draft" }),
+    });
+
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 404 for non-existent user", async () => {
+    mockPrisma.user.findUnique.mockResolvedValueOnce(null);
+
+    const { GET } = await import("@/app/api/public/posts/[username]/[postId]/route");
+    const req = new Request("http://localhost/api/public/posts/nobody/p1");
+    const res = await GET(req, {
+      params: Promise.resolve({ username: "nobody", postId: "p1" }),
+    });
 
     expect(res.status).toBe(404);
   });
