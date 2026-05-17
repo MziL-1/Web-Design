@@ -2,8 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockPrisma = {
   user: { findUnique: vi.fn() },
-  profile: { findUnique: vi.fn() },
-  post: { findMany: vi.fn(), findUnique: vi.fn(), count: vi.fn() },
 };
 
 vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
@@ -37,6 +35,8 @@ describe("GET /api/public/profile/[username]", () => {
     expect(res.status).toBe(200);
     expect(body.displayName).toBe("Alice");
     expect(body.tags).toEqual(["JavaScript"]);
+    expect(body.bio).toBe("A developer blog");
+    expect(body.avatarUrl).toBe("https://example.com/avatar.jpg");
   });
 
   it("returns 404 for non-existent user", async () => {
@@ -47,6 +47,33 @@ describe("GET /api/public/profile/[username]", () => {
     const res = await GET(req, { params: Promise.resolve({ username: "nobody" }) });
 
     expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.error).toBe("用户不存在");
+  });
+
+  it("returns 404 when user exists but has no profile", async () => {
+    mockPrisma.user.findUnique.mockResolvedValueOnce({
+      id: "u1",
+      username: "alice",
+      profile: null,
+    });
+
+    const { GET } = await import("@/app/api/public/profile/[username]/route");
+    const req = new Request("http://localhost/api/public/profile/alice");
+    const res = await GET(req, { params: Promise.resolve({ username: "alice" }) });
+
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 429 when rate limited", async () => {
+    const mockRateLimit = await import("@/lib/rate-limit");
+    (mockRateLimit.checkRateLimit as any).mockResolvedValueOnce(false);
+
+    const { GET } = await import("@/app/api/public/profile/[username]/route");
+    const req = new Request("http://localhost/api/public/profile/alice");
+    const res = await GET(req, { params: Promise.resolve({ username: "alice" }) });
+
+    expect(res.status).toBe(429);
   });
 
   it("returns cache-control header", async () => {
