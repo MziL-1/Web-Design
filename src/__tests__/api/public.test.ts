@@ -95,3 +95,42 @@ describe("GET /api/public/profile/[username]", () => {
     expect(res.headers.get("Cache-Control")).toContain("s-maxage=60");
   });
 });
+
+describe("GET /api/public/posts/[username]", () => {
+  it("returns published posts for existing user", async () => {
+    mockPrisma.user.findUnique.mockResolvedValueOnce({
+      id: "u1",
+      posts: [
+        {
+          id: "p1",
+          title: "My First Post",
+          coverImage: "https://example.com/cover.jpg",
+          createdAt: new Date("2026-01-01"),
+          tags: [{ tag: { id: "t1", name: "TypeScript" } }],
+        },
+      ],
+    });
+
+    const { GET } = await import("@/app/api/public/posts/[username]/route");
+    const req = new Request("http://localhost/api/public/posts/alice");
+    const res = await GET(req, { params: Promise.resolve({ username: "alice" }) });
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body).toHaveLength(1);
+    expect(body[0].title).toBe("My First Post");
+    expect(body[0].content).toBeUndefined();
+    expect(body[0].tags).toEqual(["TypeScript"]);
+    expect(res.headers.get("Cache-Control")).toContain("s-maxage=60");
+  });
+
+  it("returns 404 for non-existent user", async () => {
+    mockPrisma.user.findUnique.mockResolvedValueOnce(null);
+
+    const { GET } = await import("@/app/api/public/posts/[username]/route");
+    const req = new Request("http://localhost/api/public/posts/nobody");
+    const res = await GET(req, { params: Promise.resolve({ username: "nobody" }) });
+
+    expect(res.status).toBe(404);
+  });
+});
