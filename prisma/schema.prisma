@@ -17,7 +17,7 @@ model User {
   posts     Post[]
   following Follow[]  @relation("Following")
   followers Follow[]  @relation("Followers")
-  likes           Like[]
+  likes     Like[]
   siteDeployment  SiteDeployment?
 }
 
