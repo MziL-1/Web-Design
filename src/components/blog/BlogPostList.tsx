@@ -18,7 +18,8 @@ interface BlogPostListProps {
 function stripMarkdown(text: string): string {
   return text
     .replace(/!\[.*?\]\(.*?\)/g, '')
-    .replace(/[#*`>\[\]()!\-_~=+|{}.]/g, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/[#*`>\[\]()!\-_~=|{}.]/g, '')
     .replace(/\n+/g, ' ')
     .trim();
 }

@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     optimizePackageImports: [
       "react-markdown",
       "remark-gfm",
+      "rehype-raw",
       "next-auth",
       "@milkdown/kit",
       "@milkdown/react",

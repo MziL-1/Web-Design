@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 
 interface BlogPostContentProps {
   content: string;
@@ -51,6 +52,7 @@ export default function BlogPostContent({ content }: BlogPostContentProps) {
       <article className="prose max-w-none">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
+          rehypePlugins={[rehypeRaw]}
           components={{
             h1: ({ children }) => <h1 className="mb-4 mt-8 text-2xl font-bold">{children}</h1>,
             h2: ({ children }) => <h2 className="mb-3 mt-6 text-xl font-semibold">{children}</h2>,

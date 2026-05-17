@@ -40,7 +40,8 @@ const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 function stripMarkdown(text: string): string {
   return text
     .replace(/!\[.*?\]\(.*?\)/g, '')
-    .replace(/[#*`>\[\]()!\-_~=+|{}.]/g, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/[#*`>\[\]()!\-_~=|{}.]/g, '')
     .replace(/\n+/g, ' ')
     .trim();
 }
