@@ -173,6 +173,15 @@ export default function NavBar({ session }: NavBarProps) {
           )}
 
           <div className="flex items-center gap-4">
+            <Link
+              href="/templates"
+              className={`text-sm font-medium transition-colors ${
+                pathname.startsWith("/templates") ? "text-zinc-900" : "text-zinc-500 hover:text-zinc-900"
+              }`}
+            >
+              模板
+            </Link>
+
             <button
               onClick={handleWriteClick}
               className="flex items-center gap-1.5 rounded-lg bg-gray-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-600"
@@ -185,6 +194,15 @@ export default function NavBar({ session }: NavBarProps) {
 
             {session ? (
               <>
+                <Link
+                  href="/dashboard/deploy"
+                  className={`text-sm font-medium transition-colors ${
+                    pathname.startsWith("/dashboard/deploy") ? "text-zinc-900" : "text-zinc-500 hover:text-zinc-900"
+                  }`}
+                >
+                  部署
+                </Link>
+
                 <Link
                 href="/messages"
                 className="text-gray-600 hover:text-gray-950 transition-colors"
