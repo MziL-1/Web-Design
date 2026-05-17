@@ -25,6 +25,7 @@ vi.mock("@/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/lib/auth", () => ({
   auth: vi.fn().mockResolvedValue({ user: { id: "u1", username: "alice" } }),
 }));
+vi.mock("@/lib/sync", () => ({ triggerDeploy: vi.fn() }));
 
 describe("PUT /api/deployment", () => {
   beforeEach(() => {
@@ -137,6 +138,45 @@ describe("DELETE /api/deployment", () => {
     const { DELETE } = await import("@/app/api/deployment/route");
     const req = new Request("http://localhost/api/deployment", { method: "DELETE" });
     const res = await DELETE(req);
+
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("POST /api/deployment/sync", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("triggers deploy and returns success", async () => {
+    mockPrisma.siteDeployment.findUnique.mockResolvedValueOnce(mockDeployment);
+    const syncMod = await import("@/lib/sync");
+    (syncMod.triggerDeploy as any).mockResolvedValueOnce(undefined);
+    mockPrisma.siteDeployment.findUnique.mockResolvedValueOnce({
+      ...mockDeployment,
+      lastSyncStatus: "success",
+    });
+
+    const { POST } = await import("@/app/api/deployment/sync/route");
+    const req = new Request("http://localhost/api/deployment/sync", {
+      method: "POST",
+    });
+    const res = await POST(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(syncMod.triggerDeploy).toHaveBeenCalledWith("u1");
+  });
+
+  it("returns 404 when user has no deployment", async () => {
+    mockPrisma.siteDeployment.findUnique.mockResolvedValueOnce(null);
+
+    const { POST } = await import("@/app/api/deployment/sync/route");
+    const req = new Request("http://localhost/api/deployment/sync", {
+      method: "POST",
+    });
+    const res = await POST(req);
 
     expect(res.status).toBe(404);
   });
