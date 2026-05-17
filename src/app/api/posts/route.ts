@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validateField } from "@/lib/validation";
+import { triggerDeploy } from "@/lib/sync";
 
 function extractFirstImage(content: string): string | null {
   const match = content.match(/!\[.*?\]\((\S+?)\)/);
@@ -46,6 +47,8 @@ export async function POST(request: Request) {
       });
     }
   }
+
+  triggerDeploy(session.user.id);
 
   return NextResponse.json(post, { status: 201 });
 }
