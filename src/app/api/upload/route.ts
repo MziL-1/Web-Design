@@ -39,7 +39,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ url: blob.url });
     } catch (e) {
       console.error("blob upload error:", e);
+      return NextResponse.json({ error: "上传失败" }, { status: 500 });
     }
+  }
+
+  if (process.env.VERCEL) {
+    return NextResponse.json({ error: "请先在 Vercel 控制台创建 Blob 存储" }, { status: 500 });
   }
 
   const dir = path.join(process.cwd(), "public", "uploads", "avatars");
