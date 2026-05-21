@@ -5,7 +5,7 @@ import { validateField } from "@/lib/validation";
 import { triggerDeploy } from "@/lib/sync";
 
 function extractFirstImage(content: string): string | null {
-  const match = content.match(/!\[.*?\]\((\S+?)\)/);
+  const match = content.match(/!\[.*?\]\((\S+)\)/);
   return match ? match[1] : null;
 }
 

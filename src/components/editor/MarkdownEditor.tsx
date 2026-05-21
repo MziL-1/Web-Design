@@ -95,6 +95,16 @@ function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProp
       view.dispatch(tr);
       view.focus();
     });
+
+    const fn = onChangeRef.current;
+    if (fn) {
+      const editor2 = editorInfo.get();
+      if (editor2) {
+        editor2.action((ctx: any) => {
+          fn(getMarkdown()(ctx));
+        });
+      }
+    }
   }, [editorInfo]);
 
   const handlePaste = useCallback(async (e: ClipboardEvent) => {
@@ -136,10 +146,10 @@ function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProp
     };
 
     view.dom.addEventListener('input', onInput);
-    view.dom.addEventListener('paste', handlePaste);
+    view.dom.addEventListener('paste', handlePaste, true);
     return () => {
       view.dom.removeEventListener('input', onInput);
-      view.dom.removeEventListener('paste', handlePaste);
+      view.dom.removeEventListener('paste', handlePaste, true);
     };
   }, [ready, editorInfo, handlePaste]);
 
