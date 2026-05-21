@@ -62,17 +62,16 @@ export async function DELETE(_request: Request) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
   }
 
-  const existing = await prisma.siteDeployment.findUnique({
-    where: { userId: session.user.id },
-  });
-
-  if (!existing) {
-    return NextResponse.json({ error: "没有部署记录" }, { status: 404 });
+  try {
+    await prisma.siteDeployment.delete({
+      where: { userId: session.user.id },
+    });
+  } catch (err: any) {
+    if (err?.code === "P2025") {
+      return NextResponse.json({ error: "没有部署记录" }, { status: 404 });
+    }
+    return NextResponse.json({ error: "删除失败" }, { status: 500 });
   }
-
-  await prisma.siteDeployment.delete({
-    where: { userId: session.user.id },
-  });
 
   return NextResponse.json({ success: true });
 }

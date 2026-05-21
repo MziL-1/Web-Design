@@ -13,6 +13,9 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const session = await auth();
+  if (!session?.user?.id) return NextResponse.json({ error: "未登录" }, { status: 401 });
+
   const { id } = await params;
 
   const post = await prisma.post.findUnique({
@@ -24,6 +27,9 @@ export async function GET(
   });
 
   if (!post) return NextResponse.json({ error: "文章不存在" }, { status: 404 });
+  if (post.userId !== session.user.id) {
+    return NextResponse.json({ error: "无权限" }, { status: 403 });
+  }
   return NextResponse.json(post);
 }
 
@@ -52,11 +58,16 @@ export async function PUT(
 
   const content = body.content as string;
   const hasCover = body.coverImage !== undefined;
-  const coverImage = hasCover
-    ? (typeof body.coverImage === "string" && body.coverImage
-        ? body.coverImage
-        : extractFirstImage(content))
-    : undefined;
+  let coverImage: string | null | undefined;
+  if (hasCover) {
+    if (body.coverImage === null) {
+      coverImage = null;
+    } else if (typeof body.coverImage === "string" && body.coverImage) {
+      coverImage = body.coverImage;
+    } else {
+      coverImage = extractFirstImage(content);
+    }
+  }
 
   const data: any = {
     title: body.title,
@@ -89,7 +100,12 @@ export async function DELETE(
     return NextResponse.json({ error: "无权限" }, { status: 403 });
   }
 
-  await prisma.post.delete({ where: { id } });
+  const result = await prisma.post.deleteMany({
+    where: { id, userId: session.user.id },
+  });
+  if (result.count === 0) {
+    return NextResponse.json({ error: "文章不存在" }, { status: 404 });
+  }
 
   triggerDeploy(session.user.id);
 

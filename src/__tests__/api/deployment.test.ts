@@ -80,6 +80,20 @@ describe("PUT /api/deployment", () => {
 
     expect(res.status).toBe(400);
   });
+
+  it("rejects non-Vercel deploy hook URL", async () => {
+    const { PUT } = await import("@/app/api/deployment/route");
+    const req = new Request("http://localhost/api/deployment", {
+      method: "PUT",
+      body: JSON.stringify({
+        templateId: "minimal-blog",
+        deployHookUrl: "https://evil.com/hook",
+      }),
+    });
+    const res = await PUT(req);
+
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("GET /api/deployment", () => {
@@ -119,7 +133,6 @@ describe("DELETE /api/deployment", () => {
   });
 
   it("deletes deployment for authenticated user", async () => {
-    mockPrisma.siteDeployment.findUnique.mockResolvedValueOnce(mockDeployment);
     mockPrisma.siteDeployment.delete.mockResolvedValueOnce(mockDeployment);
 
     const { DELETE } = await import("@/app/api/deployment/route");
@@ -133,7 +146,9 @@ describe("DELETE /api/deployment", () => {
   });
 
   it("returns 404 when no deployment exists", async () => {
-    mockPrisma.siteDeployment.findUnique.mockResolvedValueOnce(null);
+    const err = new Error("Record to delete does not exist") as any;
+    err.code = "P2025";
+    mockPrisma.siteDeployment.delete.mockRejectedValueOnce(err);
 
     const { DELETE } = await import("@/app/api/deployment/route");
     const req = new Request("http://localhost/api/deployment", { method: "DELETE" });
@@ -148,7 +163,7 @@ describe("POST /api/deployment/sync", () => {
     vi.clearAllMocks();
   });
 
-  it("triggers deploy and returns success", async () => {
+  it("triggers immediate deploy and returns success", async () => {
     mockPrisma.siteDeployment.findUnique.mockResolvedValueOnce(mockDeployment);
     const syncMod = await import("@/lib/sync");
     (syncMod.triggerDeploy as any).mockResolvedValueOnce(undefined);
@@ -166,7 +181,7 @@ describe("POST /api/deployment/sync", () => {
 
     expect(res.status).toBe(200);
     expect(body.success).toBe(true);
-    expect(syncMod.triggerDeploy).toHaveBeenCalledWith("u1");
+    expect(syncMod.triggerDeploy).toHaveBeenCalledWith("u1", true);
   });
 
   it("returns 404 when user has no deployment", async () => {

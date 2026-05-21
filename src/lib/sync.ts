@@ -1,11 +1,55 @@
 import { prisma } from "@/lib/prisma";
 
-export async function triggerDeploy(userId: string) {
+function validateDeployHookUrl(url: string): boolean {
+  if (!url.startsWith("https://api.vercel.com/")) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+export async function triggerDeploy(userId: string, immediate = false) {
+  if (!immediate) {
+    if (debounceTimers.has(userId)) {
+      clearTimeout(debounceTimers.get(userId));
+    }
+    debounceTimers.set(
+      userId,
+      setTimeout(() => {
+        debounceTimers.delete(userId);
+        doDeploy(userId);
+      }, 3000)
+    );
+    return;
+  }
+
+  return doDeploy(userId);
+}
+
+async function doDeploy(userId: string) {
   const deployment = await prisma.siteDeployment.findUnique({
     where: { userId },
   });
 
   if (!deployment) return;
+
+  if (!validateDeployHookUrl(deployment.deployHookUrl)) {
+    try {
+      await prisma.siteDeployment.update({
+        where: { userId },
+        data: {
+          lastSyncAt: new Date(),
+          lastSyncStatus: "failed",
+          lastSyncError: "Invalid deploy hook URL",
+        },
+      });
+    } catch {}
+    return;
+  }
 
   try {
     const res = await fetch(deployment.deployHookUrl, {
@@ -14,7 +58,11 @@ export async function triggerDeploy(userId: string) {
     });
 
     if (!res.ok) {
-      throw new Error(`Vercel responded ${res.status}`);
+      let detail = "";
+      try {
+        detail = await res.text();
+      } catch {}
+      throw new Error(`Vercel responded ${res.status}${detail ? ": " + detail : ""}`);
     }
 
     await prisma.siteDeployment.update({
@@ -27,12 +75,15 @@ export async function triggerDeploy(userId: string) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    await prisma.siteDeployment.update({
-      where: { userId },
-      data: {
-        lastSyncStatus: "failed",
-        lastSyncError: message,
-      },
-    });
+    try {
+      await prisma.siteDeployment.update({
+        where: { userId },
+        data: {
+          lastSyncAt: new Date(),
+          lastSyncStatus: "failed",
+          lastSyncError: message,
+        },
+      });
+    } catch {}
   }
 }

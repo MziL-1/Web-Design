@@ -29,7 +29,7 @@ describe("triggerDeploy", () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
 
     const { triggerDeploy } = await import("@/lib/sync");
-    await triggerDeploy("u1");
+    await triggerDeploy("u1", true);
 
     expect(mockFetch).toHaveBeenCalledWith(
       "https://api.vercel.com/v1/integrations/deploy/hook123",
@@ -50,7 +50,7 @@ describe("triggerDeploy", () => {
     mockPrisma.siteDeployment.findUnique.mockResolvedValueOnce(null);
 
     const { triggerDeploy } = await import("@/lib/sync");
-    await triggerDeploy("u1");
+    await triggerDeploy("u1", true);
 
     expect(mockFetch).not.toHaveBeenCalled();
     expect(mockPrisma.siteDeployment.update).not.toHaveBeenCalled();
@@ -61,7 +61,7 @@ describe("triggerDeploy", () => {
     mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
     const { triggerDeploy } = await import("@/lib/sync");
-    await triggerDeploy("u1");
+    await triggerDeploy("u1", true);
 
     expect(mockPrisma.siteDeployment.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -79,12 +79,49 @@ describe("triggerDeploy", () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
 
     const { triggerDeploy } = await import("@/lib/sync");
-    await triggerDeploy("u1");
+    await triggerDeploy("u1", true);
 
     expect(mockPrisma.siteDeployment.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ lastSyncStatus: "failed" }),
       })
     );
+  });
+
+  it("records failure on invalid deploy hook URL", async () => {
+    mockPrisma.siteDeployment.findUnique.mockResolvedValueOnce({
+      ...mockDeployment,
+      deployHookUrl: "http://evil.com/hook",
+    });
+
+    const { triggerDeploy } = await import("@/lib/sync");
+    await triggerDeploy("u1", true);
+
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockPrisma.siteDeployment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          lastSyncStatus: "failed",
+          lastSyncError: "Invalid deploy hook URL",
+        }),
+      })
+    );
+  });
+
+  it("debounces multiple calls and defers execution", async () => {
+    mockPrisma.siteDeployment.findUnique.mockResolvedValue(mockDeployment);
+    mockFetch.mockResolvedValue({ ok: true });
+
+    const { triggerDeploy } = await import("@/lib/sync");
+
+    triggerDeploy("u1");
+    triggerDeploy("u1");
+    triggerDeploy("u1");
+
+    expect(mockFetch).not.toHaveBeenCalled();
+
+    await new Promise((r) => setTimeout(r, 3100));
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });

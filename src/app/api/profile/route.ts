@@ -32,7 +32,7 @@ export async function PUT(request: Request) {
         }
         if (
           !body.avatarUrl.startsWith("https://") &&
-          !body.avatarUrl.startsWith("data:") &&
+          !body.avatarUrl.startsWith("data:image/") &&
           !body.avatarUrl.startsWith("/")
         ) {
           return NextResponse.json({ error: "头像URL格式不正确" }, { status: 400 });
@@ -48,17 +48,18 @@ export async function PUT(request: Request) {
       data.sitePublished = body.sitePublished;
     }
 
-    const profile = await prisma.profile.update({
-      where: { userId: session.user.id },
-      data,
-    });
+    const hasTags = body.tagIds !== undefined && Array.isArray(body.tagIds);
+    if (hasTags && body.tagIds.length > 6) {
+      return NextResponse.json({ error: "最多选择6个标签" }, { status: 400 });
+    }
 
-    if (body.tagIds !== undefined && Array.isArray(body.tagIds)) {
-      if (body.tagIds.length > 6) {
-        return NextResponse.json({ error: "最多选择6个标签" }, { status: 400 });
-      }
+    const profile = await prisma.$transaction(async (tx) => {
+      const updated = await tx.profile.update({
+        where: { userId: session.user.id },
+        data,
+      });
 
-      await prisma.$transaction(async (tx) => {
+      if (hasTags) {
         if (body.tagIds.length > 0) {
           const existingTags = await tx.tag.findMany({
             where: { id: { in: body.tagIds } },
@@ -68,15 +69,17 @@ export async function PUT(request: Request) {
           }
         }
 
-        await tx.profileTag.deleteMany({ where: { profileId: profile.id } });
+        await tx.profileTag.deleteMany({ where: { profileId: updated.id } });
 
         if (body.tagIds.length > 0) {
           await tx.profileTag.createMany({
-            data: body.tagIds.map((tagId: string) => ({ profileId: profile.id, tagId })),
+            data: body.tagIds.map((tagId: string) => ({ profileId: updated.id, tagId })),
           });
         }
-      });
-    }
+      }
+
+      return updated;
+    });
 
     triggerDeploy(session.user.id);
 

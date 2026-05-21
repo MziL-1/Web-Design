@@ -17,7 +17,7 @@ export async function POST(_request: Request) {
     return NextResponse.json({ error: "未配置部署" }, { status: 404 });
   }
 
-  await triggerDeploy(session.user.id);
+  await triggerDeploy(session.user.id, true);
 
   const updated = await prisma.siteDeployment.findUnique({
     where: { userId: session.user.id },

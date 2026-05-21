@@ -64,11 +64,34 @@ export async function GET(request: Request) {
   const user = await prisma.user.findUnique({ where: { username } });
   if (!user) return NextResponse.json([]);
 
-  const posts = await prisma.post.findMany({
-    where: { userId: user.id, published: true },
-    include: { _count: { select: { comments: true } } },
-    orderBy: { createdAt: "desc" },
-  });
+  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
+  const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10) || 20));
+  const skip = (page - 1) * limit;
 
-  return NextResponse.json(posts);
+  const [posts, total] = await Promise.all([
+    prisma.post.findMany({
+      where: { userId: user.id, published: true },
+      select: {
+        id: true,
+        title: true,
+        coverImage: true,
+        createdAt: true,
+        _count: { select: { comments: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+    }),
+    prisma.post.count({
+      where: { userId: user.id, published: true },
+    }),
+  ]);
+
+  return NextResponse.json({
+    posts,
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+  });
 }
