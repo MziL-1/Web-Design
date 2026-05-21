@@ -98,6 +98,7 @@ function MilkdownEditorInner({ initialValue = '', onChange }: MarkdownEditorProp
 
     const fn = onChangeRef.current;
     if (fn) {
+      internalUpdateRef.current = true;
       const editor2 = editorInfo.get();
       if (editor2) {
         editor2.action((ctx: any) => {
