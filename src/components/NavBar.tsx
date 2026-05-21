@@ -12,7 +12,7 @@ const CreatePostModal = dynamic(() => import("@/components/modals/CreatePostModa
 
 interface NavBarProps {
   session: {
-    user: { id: string; username: string; email?: string | null };
+    user: { id: string; username: string; email?: string | null; avatarUrl?: string | null };
   } | null;
 }
 
@@ -216,9 +216,13 @@ export default function NavBar({ session }: NavBarProps) {
                   href={`/${session.user.username}`}
                   className="w-9 h-9 rounded-full border-2 border-transparent hover:border-blue-600 transition-colors overflow-hidden flex items-center justify-center bg-blue-600"
                 >
-                  <span className="text-sm font-medium text-white">
-                    {session.user.username[0].toUpperCase()}
-                  </span>
+                  {session.user.avatarUrl ? (
+                    <img src={session.user.avatarUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-sm font-medium text-white">
+                      {session.user.username[0].toUpperCase()}
+                    </span>
+                  )}
                 </Link>
 
                 <button

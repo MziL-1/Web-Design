@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
@@ -32,6 +33,7 @@ export default function EditProfileModal({
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+  const { update } = useSession();
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,6 +68,7 @@ export default function EditProfileModal({
     });
     if (res.ok) {
       toast("个人信息已更新");
+      update();
       onSaved();
       onClose();
     } else {
