@@ -29,18 +29,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user }) {
       if (user) {
         (token as Record<string, unknown>).username = user.name;
         (token as Record<string, unknown>).id = user.id;
       }
-      if (trigger === "signIn" || trigger === "signUp" || trigger === "update") {
-        const profile = await prisma.profile.findUnique({
-          where: { userId: token.id as string },
-          select: { avatarUrl: true },
-        });
-        (token as Record<string, unknown>).avatarUrl = profile?.avatarUrl ?? null;
-      }
+      const profile = await prisma.profile.findUnique({
+        where: { userId: token.id as string },
+        select: { avatarUrl: true },
+      });
+      (token as Record<string, unknown>).avatarUrl = profile?.avatarUrl ?? null;
       return token;
     },
     async session({ session, token }) {
