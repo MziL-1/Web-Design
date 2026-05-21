@@ -18,6 +18,10 @@ export default function DeployDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [showSetup, setShowSetup] = useState(false);
+  const [form, setForm] = useState({ templateId: "", deployHookUrl: "", siteUrl: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [setupError, setSetupError] = useState<string | null>(null);
 
   const fetchDeployment = useCallback(async () => {
     const res = await fetch("/api/deployment");
@@ -33,6 +37,38 @@ export default function DeployDashboardPage() {
   useEffect(() => {
     fetchDeployment();
   }, [fetchDeployment]);
+
+  const handleSubmitSetup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setSetupError(null);
+
+    try {
+      const res = await fetch("/api/deployment", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          templateId: form.templateId,
+          deployHookUrl: form.deployHookUrl,
+          siteUrl: form.siteUrl || null,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setSetupError(data.error || "配置失败");
+        return;
+      }
+
+      const data = await res.json();
+      setDeployment(data);
+      setShowSetup(false);
+    } catch {
+      setSetupError("网络错误，请稍后重试");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleSync = async () => {
     setSyncing(true);
@@ -65,24 +101,115 @@ export default function DeployDashboardPage() {
 
   if (!deployment) {
     return (
-      <div className="max-w-2xl mx-auto py-12 px-4 text-center">
-        <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-          </svg>
-        </div>
-        <h2 className="text-xl font-display font-semibold text-zinc-900 mb-2">
-          尚未部署
-        </h2>
-        <p className="text-zinc-500 text-sm mb-6">
-          选择一个模板，一键部署你的独立博客
-        </p>
-        <button
-          onClick={() => router.push("/templates")}
-          className="inline-flex items-center px-5 py-2.5 bg-zinc-900 text-white text-sm font-medium rounded-full hover:bg-zinc-800 transition-colors"
-        >
-          浏览模板
-        </button>
+      <div className="max-w-2xl mx-auto py-12 px-4">
+        <h1 className="font-display text-2xl font-semibold text-zinc-900 mb-8">
+          部署管理
+        </h1>
+
+        {!showSetup ? (
+          <div className="text-center">
+            <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-display font-semibold text-zinc-900 mb-2">
+              尚未部署
+            </h2>
+            <p className="text-zinc-500 text-sm mb-6">
+              选择一个模板部署你的独立博客，或手动配置已有部署
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={() => router.push("/templates")}
+                className="inline-flex items-center px-5 py-2.5 bg-zinc-900 text-white text-sm font-medium rounded-full hover:bg-zinc-800 transition-colors"
+              >
+                浏览模板
+              </button>
+              <button
+                onClick={() => setShowSetup(true)}
+                className="inline-flex items-center px-5 py-2.5 border border-zinc-300 text-zinc-700 text-sm font-medium rounded-full hover:bg-zinc-50 transition-colors"
+              >
+                手动配置
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white border border-zinc-200 rounded-xl p-6 max-w-lg mx-auto">
+            <h2 className="font-display text-lg font-semibold text-zinc-900 mb-4">
+              配置部署
+            </h2>
+
+            <form onSubmit={handleSubmitSetup} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                  模板标识
+                </label>
+                <input
+                  type="text"
+                  value={form.templateId}
+                  onChange={(e) => setForm({ ...form, templateId: e.target.value })}
+                  placeholder="如 minimal-blog、portfolio、或自定义名称"
+                  className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                  Vercel Deploy Hook URL
+                </label>
+                <input
+                  type="text"
+                  value={form.deployHookUrl}
+                  onChange={(e) => setForm({ ...form, deployHookUrl: e.target.value })}
+                  placeholder="https://api.vercel.com/v1/integrations/deploy/..."
+                  className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                  required
+                />
+                <p className="mt-1 text-xs text-zinc-400">
+                  在 Vercel 项目设置 → Git → Deploy Hooks 创建
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                  网站地址 <span className="text-zinc-400 font-normal">(可选)</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.siteUrl}
+                  onChange={(e) => setForm({ ...form, siteUrl: e.target.value })}
+                  placeholder="https://your-site.vercel.app"
+                  className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                />
+              </div>
+
+              {setupError && (
+                <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                  {setupError}
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-5 py-2.5 bg-zinc-900 text-white text-sm font-medium rounded-full hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                >
+                  {submitting ? "保存中..." : "保存配置"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSetup(false)}
+                  className="px-5 py-2.5 border border-zinc-300 text-zinc-700 text-sm font-medium rounded-full hover:bg-zinc-50 transition-colors"
+                >
+                  取消
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
     );
   }
