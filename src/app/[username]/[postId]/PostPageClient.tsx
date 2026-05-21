@@ -6,9 +6,11 @@ import LikeButton from "@/components/blog/LikeButton";
 import { ToastProvider } from "@/components/ui/Toast";
 
 const BlogPostContent = dynamic(() => import("@/components/blog/BlogPostContent"), {
+  ssr: false,
   loading: () => <div className="h-64 bg-gray-50 animate-pulse rounded-lg" />,
 });
 const CommentSection = dynamic(() => import("@/components/blog/CommentSection"), {
+  ssr: false,
   loading: () => <div className="mt-16 h-32 bg-gray-50 animate-pulse rounded-xl" />,
 });
 

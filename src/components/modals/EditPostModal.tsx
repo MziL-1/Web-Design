@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 
 const MarkdownEditor = dynamic(() => import("@/components/editor/MarkdownEditor"), {
+  ssr: false,
   loading: () => <div className="h-[300px] bg-gray-50 animate-pulse rounded-lg" />,
 });
 

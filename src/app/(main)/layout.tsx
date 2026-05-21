@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/ui/Footer";
 
+export const dynamic = "force-dynamic";
+
 function NavBarFallback() {
   return (
     <header className="sticky top-0 z-40 border-b border-gray-200 bg-gray-50/95 backdrop-blur-md">

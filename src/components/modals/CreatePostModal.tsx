@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/Toast";
 import FileImportDropzone from "@/components/editor/FileImportDropzone";
 
 const MarkdownEditor = dynamic(() => import("@/components/editor/MarkdownEditor"), {
+  ssr: false,
   loading: () => <div className="h-[300px] bg-gray-50 animate-pulse rounded-lg" />,
 });
 
