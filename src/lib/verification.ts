@@ -39,12 +39,16 @@ export async function sendVerificationCode(email: string): Promise<{
     try {
       const { Resend } = await import("resend");
       const resend = new Resend(apiKey);
-      await resend.emails.send({
-        from: "Blog Platform <noreply@blog-platform.dev>",
+      const { error } = await resend.emails.send({
+        from: "onboarding@resend.dev",
         to: email,
         subject: "邮箱验证码",
         text: `您的验证码是：${code}，有效期 10 分钟。`,
       });
+      if (error) {
+        console.error("Resend send error:", error);
+        return { success: false, error: error.message || "验证码发送失败" };
+      }
     } catch (e) {
       console.error("Resend send error:", e);
       return { success: false, error: "验证码发送失败，请稍后重试" };
