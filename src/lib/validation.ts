@@ -15,7 +15,8 @@ export function validateUsername(username: unknown): string {
 export function validateEmail(email: unknown): string {
   if (typeof email !== "string") return "邮箱必须是字符串";
   if (email.length < 5 || email.length > 255) return "邮箱长度需在5-255字符";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "邮箱格式不正确";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return "邮箱格式不正确";
+  if (/[<>]/.test(email)) return "邮箱包含无效字符";
   return "";
 }
 

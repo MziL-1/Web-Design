@@ -7,11 +7,12 @@ import {
   validatePassword,
 } from "@/lib/validation";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { verifyCode, markCodeUsed } from "@/lib/verification";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { username, email, password } = body;
+    const { username, email, password, code } = body;
 
     const err =
       validateUsername(username) ||
@@ -19,9 +20,18 @@ export async function POST(request: Request) {
       validatePassword(password);
     if (err) return NextResponse.json({ error: err }, { status: 400 });
 
-    const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+    if (!code || typeof code !== "string" || code.length !== 6) {
+      return NextResponse.json({ error: "请提供6位验证码" }, { status: 400 });
+    }
+
+    const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
     const ok = await checkRateLimit(ip, "register");
     if (!ok) return NextResponse.json({ error: "注册太频繁，请稍后再试" }, { status: 429 });
+
+    const result = await verifyCode(email, code);
+    if (!result.valid) {
+      return NextResponse.json({ error: result.error || "验证码无效" }, { status: 400 });
+    }
 
     const existingUser = await prisma.user.findFirst({
       where: { OR: [{ username }, { email }] },
@@ -42,6 +52,8 @@ export async function POST(request: Request) {
         profile: { create: { displayName: username } },
       },
     });
+
+    await markCodeUsed(email, code);
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (e) {
