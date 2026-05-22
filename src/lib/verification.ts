@@ -11,6 +11,44 @@ function generateCode(): string {
   return code;
 }
 
+async function sendViaSMTP(email: string, code: string) {
+  const nodemailer = await import("nodemailer");
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.qq.com",
+    port: Number(process.env.SMTP_PORT) || 465,
+    secure: true,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+  await transporter.sendMail({
+    from: process.env.SMTP_USER,
+    to: email,
+    subject: "邮箱验证码 - Blog Platform",
+    text: `您的验证码是：${code}，有效期 10 分钟。`,
+  });
+}
+
+async function sendViaResend(email: string, code: string) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return false;
+
+  const { Resend } = await import("resend");
+  const resend = new Resend(apiKey);
+  const { error } = await resend.emails.send({
+    from: "onboarding@resend.dev",
+    to: email,
+    subject: "邮箱验证码 - Blog Platform",
+    text: `您的验证码是：${code}，有效期 10 分钟。`,
+  });
+  if (error) {
+    console.error("Resend error:", error);
+    return false;
+  }
+  return true;
+}
+
 export async function sendVerificationCode(email: string): Promise<{
   success: boolean;
   error?: string;
@@ -33,28 +71,31 @@ export async function sendVerificationCode(email: string): Promise<{
     },
   });
 
-  const apiKey = process.env.RESEND_API_KEY;
+  let sent = false;
 
-  if (apiKey) {
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     try {
-      const { Resend } = await import("resend");
-      const resend = new Resend(apiKey);
-      const { error } = await resend.emails.send({
-        from: "onboarding@resend.dev",
-        to: email,
-        subject: "邮箱验证码",
-        text: `您的验证码是：${code}，有效期 10 分钟。`,
-      });
-      if (error) {
-        console.error("Resend send error:", error);
-        return { success: false, error: error.message || "验证码发送失败" };
-      }
+      await sendViaSMTP(email, code);
+      sent = true;
+    } catch (e) {
+      console.error("SMTP send error:", e);
+    }
+  }
+
+  if (!sent && process.env.RESEND_API_KEY) {
+    try {
+      sent = await sendViaResend(email, code);
     } catch (e) {
       console.error("Resend send error:", e);
-      return { success: false, error: "验证码发送失败，请稍后重试" };
     }
-  } else {
-    console.log(`[DEV] 验证码 ${code} 已发送到 ${email}`);
+  }
+
+  if (!sent) {
+    console.log(`[DEV] 验证码 ${code} 已生成，邮箱: ${email}`);
+  }
+
+  if (!sent && (process.env.SMTP_USER || process.env.RESEND_API_KEY)) {
+    return { success: false, error: "邮件发送失败，请稍后重试" };
   }
 
   return { success: true, ...(process.env.NODE_ENV !== "production" ? { code } : {}) };
