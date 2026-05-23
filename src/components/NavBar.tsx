@@ -321,9 +321,9 @@ export default function NavBar({ session }: NavBarProps) {
             )}
           </div>
 
-          {/* Mobile: avatar + hamburger */}
+          {/* Mobile: avatar / login + hamburger */}
           <div className="flex md:hidden items-center gap-2">
-            {session && (
+            {session ? (
               <Link
                 href={`/${session.user.username}`}
                 className="w-8 h-8 rounded-full border-2 border-transparent hover:border-blue-600 transition-colors overflow-hidden flex items-center justify-center bg-blue-600 shrink-0"
@@ -335,6 +335,13 @@ export default function NavBar({ session }: NavBarProps) {
                     {session.user.username[0].toUpperCase()}
                   </span>
                 )}
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-lg bg-gray-950 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-600 transition-colors shrink-0"
+              >
+                登录
               </Link>
             )}
             <button
