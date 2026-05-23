@@ -32,6 +32,7 @@ export default function NavBar({ session }: NavBarProps) {
   const isHome = pathname === "/";
 
   const [searchValue, setSearchValue] = useState(urlSearchParams.get("q") ?? "");
+  const [searchFocused, setSearchFocused] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -181,15 +182,16 @@ export default function NavBar({ session }: NavBarProps) {
           </Link>
 
           {isHome && (
-            <div ref={searchRef} className="flex-1 mx-2 sm:mx-8 max-w-[400px] relative">
+            <div ref={searchRef} className="flex-1 mx-2 sm:mx-8 max-w-[400px] relative transition-all duration-300">
               <input
                 type="text"
                 value={searchValue}
                 onChange={(e) => { setSearchValue(e.target.value); setShowDropdown(true); }}
-                onFocus={() => { if (searchValue.trim()) setShowDropdown(true); }}
+                onFocus={() => { setSearchFocused(true); if (searchValue.trim()) setShowDropdown(true); }}
+                onBlur={() => setSearchFocused(false)}
                 onKeyDown={handleSearchKeyDown}
-                placeholder="搜索作者、标签、文章..."
-                className="w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-200 rounded-lg bg-white text-sm text-gray-600 placeholder-gray-400 outline-none transition-all duration-200 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
+                placeholder={searchFocused ? "搜索作者、标签、文章..." : "搜索..."}
+                className="w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-200 rounded-lg bg-white text-sm text-gray-600 placeholder-gray-400 outline-none transition-all duration-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10"
               />
 
               {showDropdown && hasResults && (
@@ -322,7 +324,11 @@ export default function NavBar({ session }: NavBarProps) {
           </div>
 
           {/* Mobile: avatar / login + hamburger */}
-          <div className="flex md:hidden items-center gap-2">
+          <div
+            className={`flex md:hidden items-center gap-2 shrink-0 transition-all duration-300 ease-out ${
+              searchFocused && isHome ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+            }`}
+          >
             {session ? (
               <Link
                 href={`/${session.user.username}`}

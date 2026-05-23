@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAppStore } from "@/lib/store";
@@ -125,6 +125,8 @@ export default function HomePageClient({ sessionUsername, loggedIn, discoverPost
   const [discoverPageSize, setDiscoverPageSize] = useState(10);
   const [followPage, setFollowPage] = useState(1);
   const [followPageSize, setFollowPageSize] = useState(10);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
 
   useEffect(() => {
     setDiscoverPage(1);
@@ -156,6 +158,23 @@ export default function HomePageClient({ sessionUsername, loggedIn, discoverPost
   const followStart = (followPage - 1) * followPageSize;
   const followPaged = followingProfiles.slice(followStart, followStart + followPageSize);
   const followTotalPages = Math.ceil(followingProfiles.length / followPageSize);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!loggedIn) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    if (Math.abs(deltaX) < 50 || Math.abs(deltaY) > Math.abs(deltaX)) return;
+    if (deltaX > 0) {
+      setActiveTab("discover");
+    } else {
+      setActiveTab("following");
+    }
+  };
 
   if (searchQuery) {
     return (
@@ -246,7 +265,7 @@ export default function HomePageClient({ sessionUsername, loggedIn, discoverPost
   }
 
   return (
-    <div>
+    <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {loggedIn && (
         <div className="flex gap-8 mb-8 border-b border-gray-200 relative">
           <button
