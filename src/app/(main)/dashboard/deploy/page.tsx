@@ -119,7 +119,7 @@ export default function DeployDashboardPage() {
             <p className="text-zinc-500 text-sm mb-6">
               选择一个模板部署你的独立博客，或手动配置已有部署
             </p>
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-3 flex-wrap">
               <button
                 onClick={() => router.push("/templates")}
                 className="inline-flex items-center px-5 py-2.5 bg-zinc-900 text-white text-sm font-medium rounded-full hover:bg-zinc-800 transition-colors"
@@ -191,7 +191,7 @@ export default function DeployDashboardPage() {
                 </div>
               )}
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-2 flex-wrap">
                 <button
                   type="submit"
                   disabled={submitting}
@@ -279,7 +279,7 @@ export default function DeployDashboardPage() {
           </div>
         )}
 
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3 pt-2 flex-wrap">
           <button
             onClick={handleSync}
             disabled={syncing}

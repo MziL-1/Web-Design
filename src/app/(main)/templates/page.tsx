@@ -11,7 +11,7 @@ export default function TemplatesPage() {
   return (
     <div className="max-w-6xl mx-auto py-12 px-4">
       <div className="mb-10">
-        <h1 className="font-display text-3xl font-semibold text-zinc-900 mb-3">
+        <h1 className="font-display text-2xl sm:text-3xl font-semibold text-zinc-900 mb-3">
           模板市场
         </h1>
         <p className="text-zinc-500 text-base">

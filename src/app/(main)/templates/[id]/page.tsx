@@ -50,7 +50,7 @@ export default async function TemplateDetailPage({ params }: Props) {
         </div>
       </div>
 
-      <h1 className="font-display text-3xl font-semibold text-zinc-900 mb-3">
+      <h1 className="font-display text-2xl sm:text-3xl font-semibold text-zinc-900 mb-3">
         {template.name}
       </h1>
       <p className="text-zinc-500 text-base mb-6">{template.description}</p>

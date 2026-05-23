@@ -28,7 +28,7 @@ export default function BlogPostCard({
   const hasImage = !!imageUrl;
 
   return (
-    <div className={hasImage ? "grid grid-cols-[1fr_auto] gap-8" : ""}>
+    <div className={hasImage ? "flex flex-col-reverse md:grid md:grid-cols-[1fr_auto] gap-4 md:gap-8" : ""}>
       <div className="flex flex-col">
         {(authorName || date) && (
           <div className="flex items-center gap-3 mb-3 flex-wrap">
@@ -88,10 +88,10 @@ export default function BlogPostCard({
       {hasImage && (
         <div className="overflow-hidden rounded-xl shrink-0">
           <img
-            src={imageUrl}
-            alt={title}
-            className="w-44 sm:w-52 lg:w-56 aspect-[4/3] object-cover transition-transform duration-300 hover:scale-110"
-          />
+                src={imageUrl}
+                alt={title}
+                className="w-full md:w-44 lg:w-52 xl:w-56 aspect-[16/9] md:aspect-[4/3] object-cover rounded-lg transition-transform duration-300 hover:scale-110"
+              />
         </div>
       )}
     </div>

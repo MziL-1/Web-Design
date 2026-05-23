@@ -70,7 +70,7 @@ export default function BlogHeader({
           onClick={() => setDetailOpen(true)}
           className="hover:opacity-80 transition-opacity"
         >
-          <h1 className="font-display text-4xl font-medium text-gray-950 mb-2">{displayName}</h1>
+          <h1 className="font-display text-3xl sm:text-4xl font-medium text-gray-950 mb-2">{displayName}</h1>
         </button>
 
         {bio && (

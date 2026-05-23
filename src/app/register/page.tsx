@@ -93,7 +93,7 @@ export default function RegisterPage() {
     <div className="relative flex min-h-screen items-center justify-center px-4">
       <Link
         href="/"
-        className="absolute left-6 top-6 font-display text-2xl font-semibold tracking-[-0.5px] text-gray-950 hover:text-blue-600 transition-colors"
+        className="absolute left-4 top-4 sm:left-6 sm:top-6 font-display text-xl sm:text-2xl font-semibold tracking-[-0.5px] text-gray-950 hover:text-blue-600 transition-colors"
       >
         BlogPlatform
       </Link>
@@ -105,7 +105,7 @@ export default function RegisterPage() {
             <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
               邮箱
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 id="email"
                 type="email"

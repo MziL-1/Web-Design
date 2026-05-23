@@ -53,7 +53,7 @@ export default function PostPageClient({ post, comments, isOwner, username, post
           返回 {username} 的博客
         </Link>
 
-        <h1 className="font-display text-4xl font-medium leading-tight text-gray-950 mb-6">
+        <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-medium leading-tight text-gray-950 mb-6">
           {post.title}
         </h1>
 

@@ -62,7 +62,7 @@ function Pagination({
   if (totalPages <= 1 && PAGE_SIZE_OPTIONS.length <= 1) return null;
 
   return (
-    <div className="flex items-center justify-between mt-8 pt-4 border-t border-gray-100">
+      <div className="flex items-center justify-between mt-8 pt-4 border-t border-gray-100 flex-wrap gap-3">
       <div className="flex items-center gap-2">
         <span className="text-sm text-gray-400">每页</span>
         <select
@@ -78,7 +78,7 @@ function Pagination({
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-wrap">
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage <= 1}
