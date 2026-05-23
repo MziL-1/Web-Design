@@ -15,7 +15,7 @@ export const TEMPLATES: Template[] = [
     name: "极简技术博客",
     description: "白底黑字，极简排版，专注阅读体验。适合技术博客和写作。",
     thumbnail: "/templates/minimal-blog.png",
-    demoUrl: "https://my-blog-with-minimal.vercel.app",
+    demoUrl: "https://blog.ourblog-platform.cn",
     repoUrl: "https://github.com/MziL-1/blog-template-minimal",
     tags: ["博客", "极简", "技术"],
     features: [
