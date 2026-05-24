@@ -45,11 +45,12 @@ export default function Messages() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [loading, setLoading] = useState(true);
-  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [messagesLoading, setMessagesLoading] = useState(true);
   const [remoteUser, setRemoteUser] = useState<RemoteUser | null>(null);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const initialFetchDone = useRef(false);
 
   const fetchConversations = useCallback(async () => {
     const res = await fetch("/api/messages");
@@ -59,14 +60,14 @@ export default function Messages() {
     return data;
   }, []);
 
-  const fetchMessages = useCallback(async (userId: string) => {
-    setMessagesLoading(true);
+  const fetchMessages = useCallback(async (userId: string, showLoading = false) => {
+    if (showLoading) setMessagesLoading(true);
     const res = await fetch(`/api/messages?with=${encodeURIComponent(userId)}`);
     if (res.ok) {
       const data = await res.json();
       setMessages(Array.isArray(data) ? data : []);
     }
-    setMessagesLoading(false);
+    if (showLoading) setMessagesLoading(false);
   }, []);
 
   useEffect(() => {
@@ -115,32 +116,35 @@ export default function Messages() {
 
   const activeChat = chats.find((c) => c.id === activeChatId);
   const activeUser = activeChat?.user || remoteUser;
+  const otherUsername = activeUser?.username || "";
 
   // Poll for new messages in active conversation
   useEffect(() => {
     if (pollRef.current) clearInterval(pollRef.current);
     if (!activeChatId) return;
 
-    fetchMessages(activeChatId).then(() => {
+    initialFetchDone.current = false;
+    fetchMessages(activeChatId, true).then(() => {
+      initialFetchDone.current = true;
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     });
 
     pollRef.current = setInterval(() => {
-      fetchMessages(activeChatId);
+      fetchMessages(activeChatId, false);
     }, 5000);
     return () => { if (pollRef.current) clearInterval(pollRef.current); };
   }, [activeChatId, fetchMessages]);
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom when new messages arrive (only after initial fetch)
   useEffect(() => {
-    if (!messagesLoading) {
+    if (initialFetchDone.current && messages.length > 0) {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 100);
     }
-  }, [messages.length, messagesLoading]);
+  }, [messages.length]);
 
   const handleSelectChat = (id: string) => {
     setActiveChatId(id);
@@ -164,7 +168,7 @@ export default function Messages() {
     });
     if (res.ok) {
       setMessageInput("");
-      fetchMessages(activeChatId);
+      await fetchMessages(activeChatId, false);
       fetchConversations();
     }
     setSending(false);
@@ -255,7 +259,7 @@ export default function Messages() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4">
         {messagesLoading ? (
           <div className="flex-1 flex items-center justify-center text-zinc-400">
             <p className="text-sm">加载中...</p>
@@ -266,28 +270,46 @@ export default function Messages() {
           </div>
         ) : (
           <>
-            <AnimatePresence>
+            <AnimatePresence initial={false}>
               {messages.map((msg) => {
-                const sentByMe = msg.sender?.username !== activeChatId;
+                const sentByMe = msg.sender?.username !== otherUsername;
+
                 return (
                   <motion.div
                     key={msg.id}
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className={`flex flex-col max-w-[70%] ${sentByMe ? "self-end items-end" : "self-start items-start"}`}
+                    transition={{ duration: 0.2 }}
+                    className={`flex items-end gap-2 ${sentByMe ? "flex-row-reverse" : "flex-row"}`}
                   >
-                    <div
-                      className={`px-4 py-2.5 rounded-2xl ${
-                        sentByMe
-                          ? "bg-zinc-900 text-white rounded-br-sm"
-                          : "bg-zinc-100 text-zinc-900 rounded-bl-sm"
-                      }`}
-                    >
-                      <p className="text-sm leading-relaxed">{msg.content}</p>
+                    {/* Avatar */}
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-zinc-200 shrink-0">
+                      {sentByMe ? null : (
+                        displayUser.avatar ? (
+                          <img src={displayUser.avatar} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="w-full h-full flex items-center justify-center text-xs font-medium text-zinc-500">
+                            {displayUser.username?.[0]?.toUpperCase()}
+                          </span>
+                        )
+                      )}
                     </div>
-                    <span className="text-xs text-zinc-400 mt-1">
-                      {new Date(msg.createdAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
-                    </span>
+
+                    {/* Bubble + time */}
+                    <div className={`flex flex-col ${sentByMe ? "items-end" : "items-start"} max-w-[70%]`}>
+                      <div
+                        className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                          sentByMe
+                            ? "bg-zinc-900 text-white rounded-br-md"
+                            : "bg-zinc-100 text-zinc-900 rounded-bl-md"
+                        }`}
+                      >
+                        {msg.content}
+                      </div>
+                      <span className="text-[11px] text-zinc-400 mt-1 px-1">
+                        {new Date(msg.createdAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
                   </motion.div>
                 );
               })}
@@ -336,7 +358,6 @@ export default function Messages() {
 
   return (
     <div className="max-w-6xl mx-auto h-[calc(100vh-96px)] flex border-x border-zinc-200/50 bg-white -my-8">
-      {/* Chat list sidebar */}
       <div
         className={`flex flex-col h-full bg-zinc-50/30 shrink-0 border-r border-zinc-200/50
           ${activeChatId ? "hidden md:flex md:w-80" : "w-full md:w-80"}
@@ -345,7 +366,6 @@ export default function Messages() {
         {chatListContent}
       </div>
 
-      {/* Conversation panel */}
       <div
         className={`flex-col h-full min-w-0 bg-white
           ${activeChatId ? "flex flex-1" : "hidden md:flex md:flex-1"}
