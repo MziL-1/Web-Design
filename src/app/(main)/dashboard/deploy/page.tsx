@@ -29,6 +29,10 @@ export default function DeployDashboardPage() {
   const [autoTemplate, setAutoTemplate] = useState("minimal-blog");
   const [autoDeploying, setAutoDeploying] = useState(false);
   const [autoError, setAutoError] = useState<string | null>(null);
+  const [fixingHook, setFixingHook] = useState(false);
+  const [fixToken, setFixToken] = useState("");
+  const [fixError, setFixError] = useState<string | null>(null);
+  const [showFixHook, setShowFixHook] = useState(false);
 
   const fetchDeployment = useCallback(async () => {
     const res = await fetch("/api/deployment");
@@ -120,6 +124,31 @@ export default function DeployDashboardPage() {
     if (!confirm("确定要取消部署吗？此操作不会删除 Vercel 上的项目。")) return;
     await fetch("/api/deployment", { method: "DELETE" });
     setDeployment(null);
+  };
+
+  const handleFixHook = async () => {
+    setFixingHook(true);
+    setFixError(null);
+    try {
+      const res = await fetch("/api/deployment/fix-hook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: fixToken }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setDeployment(data);
+        setShowFixHook(false);
+        setFixToken("");
+        setSyncResult("Deploy Hook 已修复");
+      } else {
+        setFixError(data.error || "修复失败");
+      }
+    } catch {
+      setFixError("网络错误");
+    } finally {
+      setFixingHook(false);
+    }
   };
 
   if (loading) {
@@ -398,6 +427,48 @@ export default function DeployDashboardPage() {
             取消部署
           </button>
         </div>
+
+        {deployment.lastSyncStatus === "failed" && (
+          <div className="pt-3 border-t border-zinc-100">
+            {!showFixHook ? (
+              <button
+                onClick={() => setShowFixHook(true)}
+                className="px-4 py-2 border border-amber-300 text-amber-700 text-sm font-medium rounded-full hover:bg-amber-50 transition-colors"
+              >
+                修复 Deploy Hook
+              </button>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-zinc-600">输入 Vercel Token 重新创建 Deploy Hook</p>
+                <input
+                  type="password"
+                  value={fixToken}
+                  onChange={(e) => setFixToken(e.target.value)}
+                  placeholder="粘贴 Vercel Token..."
+                  className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                />
+                {fixError && (
+                  <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{fixError}</div>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleFixHook}
+                    disabled={fixingHook || !fixToken.trim()}
+                    className="px-4 py-2 bg-zinc-900 text-white text-sm font-medium rounded-full hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                  >
+                    {fixingHook ? "修复中..." : "确认修复"}
+                  </button>
+                  <button
+                    onClick={() => { setShowFixHook(false); setFixToken(""); setFixError(null); }}
+                    className="px-4 py-2 border border-zinc-300 text-zinc-700 text-sm font-medium rounded-full hover:bg-zinc-50 transition-colors"
+                  >
+                    取消
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
