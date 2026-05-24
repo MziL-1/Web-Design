@@ -3,13 +3,11 @@ const VERCEL_API = "https://api.vercel.com";
 interface VercelProject {
   id: string;
   name: string;
-  link?: { type: string; repo: string; repoId: number };
 }
 
 interface VercelDeployHook {
   id: string;
-  name: string;
-  url: string;
+  url?: string;
 }
 
 interface VercelEnv {
@@ -21,7 +19,6 @@ export async function createVercelProject(
   token: string,
   name: string,
   repoFullName: string,
-  branch: string
 ): Promise<VercelProject> {
   const res = await fetch(`${VERCEL_API}/v9/projects`, {
     method: "POST",
@@ -51,7 +48,7 @@ export async function setVercelEnv(
   token: string,
   projectId: string,
   key: string,
-  value: string
+  value: string,
 ): Promise<VercelEnv> {
   const res = await fetch(
     `${VERCEL_API}/v9/projects/${encodeURIComponent(projectId)}/env`,
@@ -67,7 +64,7 @@ export async function setVercelEnv(
         target: ["production", "preview", "development"],
         type: "plain",
       }),
-    }
+    },
   );
 
   if (!res.ok) {
@@ -82,7 +79,7 @@ export async function createVercelDeployHook(
   token: string,
   projectId: string,
   name: string,
-  branch: string
+  branch: string,
 ): Promise<VercelDeployHook> {
   const res = await fetch(
     `${VERCEL_API}/v1/projects/${encodeURIComponent(projectId)}/deploy-hooks`,
@@ -92,19 +89,22 @@ export async function createVercelDeployHook(
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        name,
-        ref: branch,
-      }),
-    }
+      body: JSON.stringify({ name, ref: branch }),
+    },
   );
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message || `创建 Deploy Hook 失败 (${res.status})`);
+    const text = await res.text();
+    let msg = text;
+    try { msg = JSON.parse(text).message || text; } catch {}
+    throw new Error(`创建 Deploy Hook 失败 (${res.status}): ${msg}`);
   }
 
   return res.json();
+}
+
+function buildDeployHookUrl(projectId: string, hookId: string): string {
+  return `https://api.vercel.com/v1/integrations/deploy/${encodeURIComponent(projectId)}/${hookId}`;
 }
 
 interface AutoDeployResult {
@@ -119,20 +119,23 @@ export async function autoDeploy(
   templateRepoBranch: string,
   templateId: string,
   username: string,
-  platformUrl: string
+  platformUrl: string,
 ): Promise<AutoDeployResult> {
-  const projectName = `${username}-${templateId}-${Date.now().toString(36)}`.replace(/[^a-z0-9-]/g, "-").slice(0, 52);
+  const projectName = `${username}-${templateId}-${Date.now().toString(36)}`
+    .replace(/[^a-z0-9-]/g, "-")
+    .slice(0, 52);
 
-  const project = await createVercelProject(token, projectName, templateRepoFullName, templateRepoBranch);
+  const project = await createVercelProject(token, projectName, templateRepoFullName);
 
   await setVercelEnv(token, project.id, "NEXT_PUBLIC_BLOG_API_URL", platformUrl);
   await setVercelEnv(token, project.id, "NEXT_PUBLIC_USERNAME", username);
 
   const hook = await createVercelDeployHook(token, project.id, "Blog Platform Sync", templateRepoBranch);
+  const deployHookUrl = hook.url || buildDeployHookUrl(project.id, hook.id);
 
   return {
     projectId: project.id,
     siteUrl: `https://${project.name}.vercel.app`,
-    deployHookUrl: hook.url,
+    deployHookUrl,
   };
 }
