@@ -63,7 +63,8 @@ export default function Messages() {
   const scrollToBottom = (force = false) => {
     if (!force && !isNearBottom()) return;
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      const el = messagesContainerRef.current;
+      if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     }, 100);
   };
 
