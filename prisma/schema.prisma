@@ -117,9 +117,10 @@ model SiteDeployment {
   userId          String
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   templateId      String
-  deployHookUrl   String
+  deployHookUrl   String?
   siteUrl         String?
   vercelProjectId String?
+  vercelToken     String?
   lastSyncAt      DateTime?
   lastSyncStatus  String    @default("none")
   lastSyncError   String?

@@ -140,7 +140,7 @@ export default function DeployDashboardPage() {
         setDeployment(data);
         setShowFixHook(false);
         setFixToken("");
-        setSyncResult("Deploy Hook 已修复");
+        setSyncResult("部署 Token 已更新");
       } else {
         setFixError(data.error || "修复失败");
       }
@@ -435,11 +435,11 @@ export default function DeployDashboardPage() {
                 onClick={() => setShowFixHook(true)}
                 className="px-4 py-2 border border-amber-300 text-amber-700 text-sm font-medium rounded-full hover:bg-amber-50 transition-colors"
               >
-                修复 Deploy Hook
+                 修复部署 Token
               </button>
             ) : (
               <div className="space-y-3">
-                <p className="text-sm text-zinc-600">输入 Vercel Token 重新创建 Deploy Hook</p>
+                <p className="text-sm text-zinc-600">输入 Vercel Token 更新同步凭证</p>
                 <input
                   type="password"
                   value={fixToken}

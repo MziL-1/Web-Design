@@ -45,10 +45,9 @@ export async function POST(req: Request) {
     const result = await autoDeploy(
       vercelToken.trim(),
       template.repoFullName,
-      template.repoBranch,
       templateId,
       user.username,
-      platformUrl
+      platformUrl,
     );
 
     const deployment = await prisma.siteDeployment.upsert({
@@ -56,15 +55,15 @@ export async function POST(req: Request) {
       create: {
         userId: session.user.id,
         templateId,
-        deployHookUrl: result.deployHookUrl,
         siteUrl: result.siteUrl,
         vercelProjectId: result.projectId,
+        vercelToken: result.vercelToken,
       },
       update: {
         templateId,
-        deployHookUrl: result.deployHookUrl,
         siteUrl: result.siteUrl,
         vercelProjectId: result.projectId,
+        vercelToken: result.vercelToken,
       },
     });
 
@@ -78,7 +77,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || "部署失败，请检查 Token 是否有效" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

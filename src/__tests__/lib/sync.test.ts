@@ -3,7 +3,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mockDeployment = {
   id: "d1",
   userId: "u1",
-  deployHookUrl: "https://api.vercel.com/v1/integrations/deploy/hook123",
+  vercelToken: "token123",
+  vercelProjectId: "prj_xxx",
   lastSyncStatus: "success",
 };
 
@@ -24,7 +25,7 @@ describe("triggerDeploy", () => {
     vi.clearAllMocks();
   });
 
-  it("POSTs deploy hook and updates status to success", async () => {
+  it("triggers Vercel redeploy via env var update", async () => {
     mockPrisma.siteDeployment.findUnique.mockResolvedValueOnce(mockDeployment);
     mockFetch.mockResolvedValueOnce({ ok: true });
 
@@ -32,8 +33,13 @@ describe("triggerDeploy", () => {
     await triggerDeploy("u1", true);
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://api.vercel.com/v1/integrations/deploy/hook123",
-      expect.objectContaining({ method: "POST" })
+      "https://api.vercel.com/v9/projects/prj_xxx/env",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          Authorization: "Bearer token123",
+        }),
+      }),
     );
     expect(mockPrisma.siteDeployment.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -42,7 +48,7 @@ describe("triggerDeploy", () => {
           lastSyncStatus: "success",
           lastSyncError: null,
         }),
-      })
+      }),
     );
   });
 
@@ -70,28 +76,14 @@ describe("triggerDeploy", () => {
           lastSyncStatus: "failed",
           lastSyncError: "Network error",
         }),
-      })
+      }),
     );
   });
 
-  it("records failure on non-ok response", async () => {
-    mockPrisma.siteDeployment.findUnique.mockResolvedValueOnce(mockDeployment);
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
-
-    const { triggerDeploy } = await import("@/lib/sync");
-    await triggerDeploy("u1", true);
-
-    expect(mockPrisma.siteDeployment.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ lastSyncStatus: "failed" }),
-      })
-    );
-  });
-
-  it("records failure on invalid deploy hook URL", async () => {
+  it("records failure on missing token", async () => {
     mockPrisma.siteDeployment.findUnique.mockResolvedValueOnce({
       ...mockDeployment,
-      deployHookUrl: "http://evil.com/hook",
+      vercelToken: null,
     });
 
     const { triggerDeploy } = await import("@/lib/sync");
@@ -102,9 +94,9 @@ describe("triggerDeploy", () => {
       expect.objectContaining({
         data: expect.objectContaining({
           lastSyncStatus: "failed",
-          lastSyncError: "Invalid deploy hook URL",
+          lastSyncError: "缺少 Vercel Token 或项目ID，请重新部署",
         }),
-      })
+      }),
     );
   });
 

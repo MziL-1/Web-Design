@@ -1,14 +1,5 @@
 import { prisma } from "@/lib/prisma";
-
-function validateDeployHookUrl(url: string): boolean {
-  if (!url.startsWith("https://api.vercel.com/")) return false;
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
+import { triggerVercelRedeploy } from "@/lib/vercel-api";
 
 const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
@@ -22,7 +13,7 @@ export async function triggerDeploy(userId: string, immediate = false) {
       setTimeout(() => {
         debounceTimers.delete(userId);
         doDeploy(userId);
-      }, 3000)
+      }, 3000),
     );
     return;
   }
@@ -37,14 +28,17 @@ async function doDeploy(userId: string) {
 
   if (!deployment) return;
 
-  if (!validateDeployHookUrl(deployment.deployHookUrl)) {
+  const token = deployment.vercelToken;
+  const projectId = deployment.vercelProjectId;
+
+  if (!projectId || !token) {
     try {
       await prisma.siteDeployment.update({
         where: { userId },
         data: {
           lastSyncAt: new Date(),
           lastSyncStatus: "failed",
-          lastSyncError: "Invalid deploy hook URL",
+          lastSyncError: "缺少 Vercel Token 或项目ID，请重新部署",
         },
       });
     } catch {}
@@ -52,18 +46,7 @@ async function doDeploy(userId: string) {
   }
 
   try {
-    const res = await fetch(deployment.deployHookUrl, {
-      method: "POST",
-      signal: AbortSignal.timeout(5000),
-    });
-
-    if (!res.ok) {
-      let detail = "";
-      try {
-        detail = await res.text();
-      } catch {}
-      throw new Error(`Vercel responded ${res.status}${detail ? ": " + detail : ""}`);
-    }
+    await triggerVercelRedeploy(token, projectId);
 
     await prisma.siteDeployment.update({
       where: { userId },
