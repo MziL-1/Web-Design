@@ -82,14 +82,14 @@ export async function createVercelDeployHook(
   branch: string,
 ): Promise<VercelDeployHook> {
   const res = await fetch(
-    `${VERCEL_API}/v1/projects/${encodeURIComponent(projectId)}/deploy-hooks`,
+    `${VERCEL_API}/v2/integrations/deploy-hooks`,
     {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ name, ref: branch }),
+      body: JSON.stringify({ name, projectId, ref: branch }),
     },
   );
 
