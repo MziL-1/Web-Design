@@ -72,31 +72,66 @@ export async function triggerVercelRedeploy(
   token: string,
   projectId: string,
 ): Promise<void> {
-  // Update SYNC_TRIGGER env var to force Vercel redeploy
   const triggerValue = Date.now().toString();
 
-  const res = await fetch(
+  // Try to find existing SYNC_TRIGGER env var
+  const listRes = await fetch(
     `${VERCEL_API}/v9/projects/${encodeURIComponent(projectId)}/env`,
     {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        key: "SYNC_TRIGGER",
-        value: triggerValue,
-        target: ["production"],
-        type: "plain",
-      }),
+      headers: { Authorization: `Bearer ${token}` },
     },
   );
 
-  if (!res.ok) {
-    const text = await res.text();
-    let msg = text;
-    try { msg = JSON.parse(text).message || text; } catch {}
-    throw new Error(`触发部署失败 (${res.status}): ${msg}`);
+  let existingId: string | null = null;
+  if (listRes.ok) {
+    const envs: { envs: Array<{ id: string; key: string }> } = await listRes.json();
+    const found = envs.envs?.find((e) => e.key === "SYNC_TRIGGER");
+    if (found) existingId = found.id;
+  }
+
+  if (existingId) {
+    // Update existing
+    const res = await fetch(
+      `${VERCEL_API}/v9/projects/${encodeURIComponent(projectId)}/env/${existingId}`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ value: triggerValue }),
+      },
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      let msg = text;
+      try { msg = JSON.parse(text).message || text; } catch {}
+      throw new Error(`触发部署失败 (${res.status}): ${msg}`);
+    }
+  } else {
+    // Create new
+    const res = await fetch(
+      `${VERCEL_API}/v9/projects/${encodeURIComponent(projectId)}/env`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          key: "SYNC_TRIGGER",
+          value: triggerValue,
+          target: ["production"],
+          type: "plain",
+        }),
+      },
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      let msg = text;
+      try { msg = JSON.parse(text).message || text; } catch {}
+      throw new Error(`触发部署失败 (${res.status}): ${msg}`);
+    }
   }
 }
 

@@ -27,6 +27,7 @@ describe("triggerDeploy", () => {
 
   it("triggers Vercel redeploy via env var update", async () => {
     mockPrisma.siteDeployment.findUnique.mockResolvedValueOnce(mockDeployment);
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ envs: [] }) });
     mockFetch.mockResolvedValueOnce({ ok: true });
 
     const { triggerDeploy } = await import("@/lib/sync");
@@ -34,20 +35,12 @@ describe("triggerDeploy", () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       "https://api.vercel.com/v9/projects/prj_xxx/env",
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          Authorization: "Bearer token123",
-        }),
-      }),
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: "Bearer token123" }) }),
     );
     expect(mockPrisma.siteDeployment.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { userId: "u1" },
-        data: expect.objectContaining({
-          lastSyncStatus: "success",
-          lastSyncError: null,
-        }),
+        data: expect.objectContaining({ lastSyncStatus: "success", lastSyncError: null }),
       }),
     );
   });
@@ -64,6 +57,7 @@ describe("triggerDeploy", () => {
 
   it("records failure status on network error", async () => {
     mockPrisma.siteDeployment.findUnique.mockResolvedValueOnce(mockDeployment);
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ envs: [] }) });
     mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
     const { triggerDeploy } = await import("@/lib/sync");
@@ -102,7 +96,7 @@ describe("triggerDeploy", () => {
 
   it("debounces multiple calls and defers execution", async () => {
     mockPrisma.siteDeployment.findUnique.mockResolvedValue(mockDeployment);
-    mockFetch.mockResolvedValue({ ok: true });
+    mockFetch.mockResolvedValue({ ok: true, json: async () => ({ envs: [] }) });
 
     const { triggerDeploy } = await import("@/lib/sync");
 
@@ -114,6 +108,6 @@ describe("triggerDeploy", () => {
 
     await new Promise((r) => setTimeout(r, 3100));
 
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 });
