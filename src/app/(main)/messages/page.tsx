@@ -48,6 +48,7 @@ export default function Messages() {
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [remoteUser, setRemoteUser] = useState<RemoteUser | null>(null);
   const [sending, setSending] = useState(false);
+  const [myAvatar, setMyAvatar] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const initialFetchDone = useRef(false);
@@ -72,6 +73,12 @@ export default function Messages() {
 
   useEffect(() => {
     fetchConversations().then(() => setLoading(false));
+    fetch("/api/profile")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.avatarUrl) setMyAvatar(data.avatarUrl);
+      })
+      .catch(() => {});
   }, [fetchConversations]);
 
   // Handle ?to=username param
@@ -284,7 +291,15 @@ export default function Messages() {
                   >
                     {/* Avatar */}
                     <div className="w-8 h-8 rounded-full overflow-hidden bg-zinc-200 shrink-0">
-                      {sentByMe ? null : (
+                      {sentByMe ? (
+                        myAvatar ? (
+                          <img src={myAvatar} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="w-full h-full flex items-center justify-center text-xs font-medium text-zinc-500">
+                            我
+                          </span>
+                        )
+                      ) : (
                         displayUser.avatar ? (
                           <img src={displayUser.avatar} alt="" className="w-full h-full object-cover" />
                         ) : (
