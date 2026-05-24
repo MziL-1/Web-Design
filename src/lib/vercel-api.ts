@@ -72,66 +72,47 @@ export async function triggerVercelRedeploy(
   token: string,
   projectId: string,
 ): Promise<void> {
-  const triggerValue = Date.now().toString();
-
-  // Try to find existing SYNC_TRIGGER env var
-  const listRes = await fetch(
-    `${VERCEL_API}/v9/projects/${encodeURIComponent(projectId)}/env`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    },
+  // Get project info to retrieve git repository details
+  const projectRes = await fetch(
+    `${VERCEL_API}/v9/projects/${encodeURIComponent(projectId)}`,
+    { headers: { Authorization: `Bearer ${token}` } },
   );
 
-  let existingId: string | null = null;
-  if (listRes.ok) {
-    const envs: { envs: Array<{ id: string; key: string }> } = await listRes.json();
-    const found = envs.envs?.find((e) => e.key === "SYNC_TRIGGER");
-    if (found) existingId = found.id;
+  if (!projectRes.ok) {
+    const text = await projectRes.text();
+    throw new Error(`获取项目信息失败 (${projectRes.status}): ${text}`);
   }
 
-  if (existingId) {
-    // Update existing
-    const res = await fetch(
-      `${VERCEL_API}/v9/projects/${encodeURIComponent(projectId)}/env/${existingId}`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ value: triggerValue }),
-      },
-    );
-    if (!res.ok) {
-      const text = await res.text();
-      let msg = text;
-      try { msg = JSON.parse(text).message || text; } catch {}
-      throw new Error(`触发部署失败 (${res.status}): ${msg}`);
-    }
-  } else {
-    // Create new
-    const res = await fetch(
-      `${VERCEL_API}/v9/projects/${encodeURIComponent(projectId)}/env`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          key: "SYNC_TRIGGER",
-          value: triggerValue,
-          target: ["production"],
-          type: "plain",
-        }),
-      },
-    );
-    if (!res.ok) {
-      const text = await res.text();
-      let msg = text;
-      try { msg = JSON.parse(text).message || text; } catch {}
-      throw new Error(`触发部署失败 (${res.status}): ${msg}`);
-    }
+  const project = await projectRes.json();
+
+  // Create a new deployment from the git source
+  const res = await fetch(`${VERCEL_API}/v13/deployments?forceNew=1`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: project.name,
+      target: "production",
+      project: projectId,
+      ...(project.link
+        ? {
+            gitSource: {
+              type: project.link.type,
+              repoId: project.link.repoId,
+              ref: project.link.productionBranch || "main",
+            },
+          }
+        : {}),
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    let msg = text;
+    try { msg = JSON.parse(text).message || text; } catch {}
+    throw new Error(`触发部署失败 (${res.status}): ${msg}`);
   }
 }
 

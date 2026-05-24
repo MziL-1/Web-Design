@@ -25,16 +25,22 @@ describe("triggerDeploy", () => {
     vi.clearAllMocks();
   });
 
-  it("triggers Vercel redeploy via env var update", async () => {
+  it("triggers Vercel redeploy via deployment API", async () => {
     mockPrisma.siteDeployment.findUnique.mockResolvedValueOnce(mockDeployment);
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ envs: [] }) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        name: "test-project",
+        link: { type: "github", repoId: 12345, productionBranch: "main" },
+      }),
+    });
     mockFetch.mockResolvedValueOnce({ ok: true });
 
     const { triggerDeploy } = await import("@/lib/sync");
     await triggerDeploy("u1", true);
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://api.vercel.com/v9/projects/prj_xxx/env",
+      "https://api.vercel.com/v9/projects/prj_xxx",
       expect.objectContaining({ headers: expect.objectContaining({ Authorization: "Bearer token123" }) }),
     );
     expect(mockPrisma.siteDeployment.update).toHaveBeenCalledWith(
@@ -57,7 +63,13 @@ describe("triggerDeploy", () => {
 
   it("records failure status on network error", async () => {
     mockPrisma.siteDeployment.findUnique.mockResolvedValueOnce(mockDeployment);
-    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ envs: [] }) });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        name: "test-project",
+        link: { type: "github", repoId: 12345, productionBranch: "main" },
+      }),
+    });
     mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
     const { triggerDeploy } = await import("@/lib/sync");
@@ -96,7 +108,13 @@ describe("triggerDeploy", () => {
 
   it("debounces multiple calls and defers execution", async () => {
     mockPrisma.siteDeployment.findUnique.mockResolvedValue(mockDeployment);
-    mockFetch.mockResolvedValue({ ok: true, json: async () => ({ envs: [] }) });
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        name: "test-project",
+        link: { type: "github", repoId: 12345, productionBranch: "main" },
+      }),
+    });
 
     const { triggerDeploy } = await import("@/lib/sync");
 
