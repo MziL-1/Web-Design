@@ -76,9 +76,10 @@ export async function GET(req: Request) {
   const unreadMap = new Map(unreadCounts.map((u) => [u.senderId, u._count.id]));
 
   const conversations = Array.from(conversationsMap.values()).map((msg) => {
+    const otherUserId = msg.senderId === session.user.id ? msg.receiverId : msg.senderId;
     const otherUser = msg.senderId === session.user.id ? msg.receiver : msg.sender;
     return {
-      id: otherUser.username,
+      id: otherUserId,
       user: {
         username: otherUser.username,
         displayName: otherUser.profile?.displayName || otherUser.username,
@@ -86,7 +87,7 @@ export async function GET(req: Request) {
       },
       lastMessage: msg.content.slice(0, 60),
       time: msg.createdAt.toISOString(),
-      unread: unreadMap.get(otherUser.username === msg.sender?.username ? msg.senderId : msg.receiverId) || 0,
+      unread: unreadMap.get(otherUserId) || 0,
     };
   });
 

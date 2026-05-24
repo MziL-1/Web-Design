@@ -86,7 +86,7 @@ export default function Messages() {
       .then((data) => {
         if (data?.username) {
           const newChat: Chat = {
-            id: data.username,
+            id: data.userId || data.username,
             user: {
               username: data.username,
               displayName: data.displayName || data.username,
@@ -100,9 +100,9 @@ export default function Messages() {
             const exists = prev.find((c) => c.user.username === data.username);
             return exists ? prev : [newChat, ...prev];
           });
-          setActiveChatId(data.username);
+          setActiveChatId(data.userId || data.username);
           setRemoteUser({
-            id: data.username,
+            id: data.userId || data.username,
             username: data.username,
             displayName: data.displayName,
             avatarUrl: data.avatarUrl,
@@ -121,28 +121,12 @@ export default function Messages() {
     if (pollRef.current) clearInterval(pollRef.current);
     if (!activeChatId) return;
 
-    const loadUserAndMessages = async () => {
-      if (!activeUser?.username) {
-        const res = await fetch(`/api/public/profile/${encodeURIComponent(activeChatId)}`);
-        if (res.ok) {
-          const data = await res.json();
-          setRemoteUser({
-            id: activeChatId,
-            username: data.username,
-            displayName: data.displayName || data.username,
-            avatarUrl: data.avatarUrl || null,
-            avatar: data.avatarUrl || "",
-          });
-        }
-      }
-      fetchMessages(activeChatId).then(() => {
-        setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        }, 100);
-      });
-    };
+    fetchMessages(activeChatId).then(() => {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
+    });
 
-    loadUserAndMessages();
     pollRef.current = setInterval(() => {
       fetchMessages(activeChatId);
     }, 5000);
