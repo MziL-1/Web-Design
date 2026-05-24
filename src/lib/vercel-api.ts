@@ -54,7 +54,7 @@ export async function setVercelEnv(
   value: string
 ): Promise<VercelEnv> {
   const res = await fetch(
-    `${VERCEL_API}/v9/projects/${encodeURIComponent(projectId)}/env?teamId=`,
+    `${VERCEL_API}/v9/projects/${encodeURIComponent(projectId)}/env`,
     {
       method: "POST",
       headers: {
@@ -85,7 +85,7 @@ export async function createVercelDeployHook(
   branch: string
 ): Promise<VercelDeployHook> {
   const res = await fetch(
-    `${VERCEL_API}/v1/integrations/deploy-hooks?teamId=`,
+    `${VERCEL_API}/v1/projects/${encodeURIComponent(projectId)}/deploy-hooks`,
     {
       method: "POST",
       headers: {
@@ -94,8 +94,7 @@ export async function createVercelDeployHook(
       },
       body: JSON.stringify({
         name,
-        projectId,
-        branch,
+        ref: branch,
       }),
     }
   );
