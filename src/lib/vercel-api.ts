@@ -122,6 +122,13 @@ export async function autoDeploy(
   await setVercelEnv(token, project.id, "NEXT_PUBLIC_BLOG_API_URL", platformUrl);
   await setVercelEnv(token, project.id, "NEXT_PUBLIC_USERNAME", username);
 
+  // Trigger redeploy so env vars take effect on the live site
+  try {
+    await triggerVercelRedeploy(token, project.id);
+  } catch {
+    // Non-fatal: initial deploy may already be in progress
+  }
+
   return {
     projectId: project.id,
     siteUrl: `https://${project.name}.vercel.app`,
