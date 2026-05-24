@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
@@ -36,11 +36,33 @@ export default function NavBar({ session }: NavBarProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [searchResults, setSearchResults] = useState<{ users: any[]; posts: any[] }>({ users: [], posts: [] });
   const searchRef = useRef<HTMLDivElement>(null);
   const mobileRef = useRef<HTMLDivElement>(null);
 
   const debouncedSearch = useDebounce(searchValue.trim(), 300);
+
+  const fetchUnreadCount = useCallback(async () => {
+    if (!session?.user?.id) return;
+    try {
+      const res = await fetch("/api/messages/unread-count");
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadCount(data.count ?? 0);
+      }
+    } catch {}
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [fetchUnreadCount]);
+
+  useEffect(() => {
+    if (pathname === "/messages") setUnreadCount(0);
+  }, [pathname]);
 
   useEffect(() => {
     if (debouncedSearch.length < 1) {
@@ -133,7 +155,7 @@ export default function NavBar({ session }: NavBarProps) {
       {session && (
         <>
           <NavLink href="/dashboard/deploy" label="部署" active={pathname.startsWith("/dashboard/deploy")} />
-          <NavLink href="/messages" label="消息" active={pathname.startsWith("/messages")} />
+          <NavLink href="/messages" label={unreadCount > 0 ? `消息 (${unreadCount > 99 ? "99+" : unreadCount})` : "消息"} active={pathname.startsWith("/messages")} />
           <NavLink href={`/${session.user.username}`} label="我的博客" active={pathname === `/${session.user.username}`} />
         </>
       )}
@@ -281,11 +303,16 @@ export default function NavBar({ session }: NavBarProps) {
 
                 <Link
                   href="/messages"
-                  className="text-gray-600 hover:text-gray-950 transition-colors"
+                  className="relative text-gray-600 hover:text-gray-950 transition-colors"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
                   </svg>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-blue-600 text-white text-[10px] font-bold w-4.5 h-4.5 min-w-[18px] flex items-center justify-center rounded-full leading-none">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
                 </Link>
 
                 <Link

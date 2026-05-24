@@ -18,7 +18,9 @@ model User {
   following Follow[]  @relation("Following")
   followers Follow[]  @relation("Followers")
   likes     Like[]
-  siteDeployment  SiteDeployment?
+  siteDeployment    SiteDeployment?
+  sentMessages      Message[]  @relation("SentMessages")
+  receivedMessages  Message[]  @relation("ReceivedMessages")
 }
 
 model Profile {
@@ -135,4 +137,18 @@ model EmailVerification {
   createdAt DateTime @default(now())
 
   @@index([email, createdAt])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  content    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([receiverId, read, createdAt])
+  @@index([senderId, receiverId, createdAt])
 }
