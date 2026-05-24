@@ -113,17 +113,18 @@ model Like {
 }
 
 model SiteDeployment {
-  id             String    @id @default(cuid())
-  userId         String
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  templateId     String
-  deployHookUrl  String
-  siteUrl        String?
-  lastSyncAt     DateTime?
-  lastSyncStatus String    @default("none")
-  lastSyncError  String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  templateId      String
+  deployHookUrl   String
+  siteUrl         String?
+  vercelProjectId String?
+  lastSyncAt      DateTime?
+  lastSyncStatus  String    @default("none")
+  lastSyncError   String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@unique([userId])
 }

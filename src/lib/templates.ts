@@ -5,6 +5,8 @@ export interface Template {
   thumbnail: string;
   demoUrl: string;
   repoUrl: string;
+  repoFullName: string;
+  repoBranch: string;
   tags: string[];
   features: string[];
 }
@@ -17,6 +19,8 @@ export const TEMPLATES: Template[] = [
     thumbnail: "/templates/minimal-blog.png",
     demoUrl: "https://blog.ourblog-platform.cn",
     repoUrl: "https://github.com/MziL-1/blog-template-minimal",
+    repoFullName: "MziL-1/blog-template-minimal",
+    repoBranch: "main",
     tags: ["博客", "极简", "技术"],
     features: [
       "SSG 静态生成，SEO 友好",
@@ -32,6 +36,8 @@ export const TEMPLATES: Template[] = [
     thumbnail: "/templates/portfolio.png",
     demoUrl: "https://portfolio-demo.vercel.app",
     repoUrl: "https://github.com/MziL-1/blog-template-portfolio",
+    repoFullName: "MziL-1/blog-template-portfolio",
+    repoBranch: "main",
     tags: ["作品集", "项目展示"],
     features: [
       "项目卡片展示区",

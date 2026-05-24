@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { TEMPLATES } from "@/lib/templates";
 
 interface Deployment {
   templateId: string;
   deployHookUrl: string;
   siteUrl: string | null;
+  vercelProjectId?: string | null;
   lastSyncAt: string | null;
   lastSyncStatus: "none" | "success" | "failed" | "pending";
   lastSyncError: string | null;
@@ -19,9 +21,14 @@ export default function DeployDashboardPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
   const [showSetup, setShowSetup] = useState(false);
+  const [showAutoDeploy, setShowAutoDeploy] = useState(false);
   const [form, setForm] = useState({ templateId: "", deployHookUrl: "", siteUrl: "" });
   const [submitting, setSubmitting] = useState(false);
   const [setupError, setSetupError] = useState<string | null>(null);
+  const [autoToken, setAutoToken] = useState("");
+  const [autoTemplate, setAutoTemplate] = useState("minimal-blog");
+  const [autoDeploying, setAutoDeploying] = useState(false);
+  const [autoError, setAutoError] = useState<string | null>(null);
 
   const fetchDeployment = useCallback(async () => {
     const res = await fetch("/api/deployment");
@@ -37,6 +44,30 @@ export default function DeployDashboardPage() {
   useEffect(() => {
     fetchDeployment();
   }, [fetchDeployment]);
+
+  const handleAutoDeploy = async () => {
+    setAutoDeploying(true);
+    setAutoError(null);
+    try {
+      const res = await fetch("/api/deployment/auto-deploy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ templateId: autoTemplate, vercelToken: autoToken }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setDeployment(data.deployment);
+        setShowAutoDeploy(false);
+        setAutoToken("");
+      } else {
+        setAutoError(data.error || "部署失败");
+      }
+    } catch {
+      setAutoError("网络错误，请稍后重试");
+    } finally {
+      setAutoDeploying(false);
+    }
+  };
 
   const handleSubmitSetup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,25 +137,28 @@ export default function DeployDashboardPage() {
           部署管理
         </h1>
 
-        {!showSetup ? (
+        {!showSetup && !showAutoDeploy ? (
           <div className="text-center">
             <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3" />
               </svg>
             </div>
             <h2 className="text-xl font-display font-semibold text-zinc-900 mb-2">
               尚未部署
             </h2>
             <p className="text-zinc-500 text-sm mb-6">
-              选择一个模板部署你的独立博客，或手动配置已有部署
+              一键部署你的独立博客，只需一个 Vercel Token
             </p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <button
-                onClick={() => router.push("/templates")}
-                className="inline-flex items-center px-5 py-2.5 bg-zinc-900 text-white text-sm font-medium rounded-full hover:bg-zinc-800 transition-colors"
+                onClick={() => setShowAutoDeploy(true)}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-zinc-900 text-white text-sm font-semibold rounded-full hover:bg-zinc-800 transition-colors"
               >
-                浏览模板
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                </svg>
+                一键部署
               </button>
               <button
                 onClick={() => setShowSetup(true)}
@@ -134,10 +168,83 @@ export default function DeployDashboardPage() {
               </button>
             </div>
           </div>
+        ) : showAutoDeploy ? (
+          <div className="bg-white border border-zinc-200 rounded-xl p-6 max-w-lg mx-auto">
+            <h2 className="font-display text-lg font-semibold text-zinc-900 mb-2">
+              一键部署
+            </h2>
+            <p className="text-zinc-500 text-sm mb-6">
+              自动创建 Vercel 项目并配置环境变量，30 秒上线
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                  选择模板
+                </label>
+                <select
+                  value={autoTemplate}
+                  onChange={(e) => setAutoTemplate(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg text-sm bg-white focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                >
+                  {TEMPLATES.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1.5">
+                  Vercel Access Token
+                </label>
+                <input
+                  type="password"
+                  value={autoToken}
+                  onChange={(e) => setAutoToken(e.target.value)}
+                  placeholder="粘贴你的 Vercel Token..."
+                  className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+                />
+                <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
+                  前往{" "}
+                  <a
+                    href="https://vercel.com/account/tokens"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    vercel.com/account/tokens
+                  </a>{" "}
+                  创建一个 Token，Full Account 权限。Token 仅在本次部署使用，不会存储。
+                </p>
+              </div>
+
+              {autoError && (
+                <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                  {autoError}
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2 flex-wrap">
+                <button
+                  onClick={handleAutoDeploy}
+                  disabled={autoDeploying || !autoToken.trim()}
+                  className="px-5 py-2.5 bg-zinc-900 text-white text-sm font-medium rounded-full hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                >
+                  {autoDeploying ? "部署中..." : "开始部署"}
+                </button>
+                <button
+                  onClick={() => { setShowAutoDeploy(false); setAutoToken(""); setAutoError(null); }}
+                  className="px-5 py-2.5 border border-zinc-300 text-zinc-700 text-sm font-medium rounded-full hover:bg-zinc-50 transition-colors"
+                >
+                  返回
+                </button>
+              </div>
+            </div>
+          </div>
         ) : (
           <div className="bg-white border border-zinc-200 rounded-xl p-6 max-w-lg mx-auto">
             <h2 className="font-display text-lg font-semibold text-zinc-900 mb-4">
-              配置部署
+              手动配置部署
             </h2>
 
             <form onSubmit={handleSubmitSetup} className="space-y-4">
@@ -149,7 +256,7 @@ export default function DeployDashboardPage() {
                   type="text"
                   value={form.templateId}
                   onChange={(e) => setForm({ ...form, templateId: e.target.value })}
-                  placeholder="如 minimal-blog、portfolio、或自定义名称"
+                  placeholder="如 minimal-blog、portfolio"
                   className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
                   required
                 />
@@ -167,9 +274,6 @@ export default function DeployDashboardPage() {
                   className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
                   required
                 />
-                <p className="mt-1 text-xs text-zinc-400">
-                  在 Vercel 项目设置 → Git → Deploy Hooks 创建
-                </p>
               </div>
 
               <div>
