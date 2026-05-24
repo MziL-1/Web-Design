@@ -50,8 +50,22 @@ export default function Messages() {
   const [sending, setSending] = useState(false);
   const [myAvatar, setMyAvatar] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const initialFetchDone = useRef(false);
+
+  const isNearBottom = () => {
+    const el = messagesContainerRef.current;
+    if (!el) return true;
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+  };
+
+  const scrollToBottom = (force = false) => {
+    if (!force && !isNearBottom()) return;
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  };
 
   const fetchConversations = useCallback(async () => {
     const res = await fetch("/api/messages");
@@ -133,9 +147,7 @@ export default function Messages() {
     initialFetchDone.current = false;
     fetchMessages(activeChatId, true).then(() => {
       initialFetchDone.current = true;
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
+      scrollToBottom(true);
     });
 
     pollRef.current = setInterval(() => {
@@ -147,9 +159,7 @@ export default function Messages() {
   // Scroll to bottom when new messages arrive (only after initial fetch)
   useEffect(() => {
     if (initialFetchDone.current && messages.length > 0) {
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
+      scrollToBottom(false);
     }
   }, [messages.length]);
 
@@ -266,7 +276,7 @@ export default function Messages() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-4">
         {messagesLoading ? (
           <div className="flex-1 flex items-center justify-center text-zinc-400">
             <p className="text-sm">加载中...</p>
