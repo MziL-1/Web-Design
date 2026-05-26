@@ -199,12 +199,53 @@ export default function DeployDashboardPage() {
           </div>
         ) : showAutoDeploy ? (
           <div className="bg-white border border-zinc-200 rounded-xl p-6 max-w-lg mx-auto">
-            <h2 className="font-display text-lg font-semibold text-zinc-900 mb-2">
+            <h2 className="font-display text-lg font-semibold text-zinc-900 mb-1">
               一键部署
             </h2>
             <p className="text-zinc-500 text-sm mb-6">
-              自动创建 Vercel 项目并配置环境变量，30 秒上线
+              填一个 Token，30 秒上线你的独立博客
             </p>
+
+            {/* Pre-requisite checklist */}
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm">
+              <p className="font-semibold text-amber-800 mb-2">部署前确认</p>
+              <ol className="space-y-2 text-amber-700">
+                <li className="flex items-start gap-2">
+                  <span className="shrink-0 mt-0.5 w-5 h-5 bg-amber-200 text-amber-800 rounded-full flex items-center justify-center text-[11px] font-bold">1</span>
+                  <span>
+                    有{' '}
+                    <a href="https://vercel.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">Vercel</a>
+                    {' '}账号（推荐用 GitHub 注册）
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="shrink-0 mt-0.5 w-5 h-5 bg-amber-200 text-amber-800 rounded-full flex items-center justify-center text-[11px] font-bold">2</span>
+                  <span>
+                    <strong>Vercel 已连接 GitHub：</strong>
+                    {' '}
+                    <a href="https://vercel.com/dashboard/settings/integrations" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">
+                      Settings → Integrations → GitHub → Connect
+                    </a>
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="shrink-0 mt-0.5 w-5 h-5 bg-amber-200 text-amber-800 rounded-full flex items-center justify-center text-[11px] font-bold">3</span>
+                  <span>
+                    创建{' '}
+                    <a href="https://vercel.com/account/tokens" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">
+                      Vercel Access Token
+                    </a>
+                    {' '}（Full Account 权限）
+                  </span>
+                </li>
+              </ol>
+            </div>
+
+            {!autoToken && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
+                第 2 步最容易被忽略——没有 GitHub 授权，Vercel 无法克隆模板仓库，会导致部署的项目为空。
+              </div>
+            )}
 
             <div className="space-y-4">
               <div>
@@ -233,17 +274,12 @@ export default function DeployDashboardPage() {
                   placeholder="粘贴你的 Vercel Token..."
                   className="w-full px-4 py-2.5 border border-zinc-300 rounded-lg text-sm focus:outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
                 />
-                <p className="mt-2 text-xs text-zinc-400 leading-relaxed">
-                  前往{" "}
-                  <a
-                    href="https://vercel.com/account/tokens"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
+                <p className="mt-1.5 text-xs text-zinc-400">
+                  从{' '}
+                  <a href="https://vercel.com/account/tokens" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                     vercel.com/account/tokens
-                  </a>{" "}
-                  创建一个 Token，Full Account 权限。Token 仅在本次部署使用，不会存储。
+                  </a>
+                  {' '}创建，选 Full Account 权限。Token 只用于本次创建项目，不会明文存储。
                 </p>
               </div>
 

@@ -88,68 +88,50 @@ export default async function TemplateDetailPage({ params }: Props) {
           <li className="flex gap-3">
             <span className="w-6 h-6 bg-zinc-900 text-white rounded-full flex items-center justify-center text-xs shrink-0 mt-0.5">1</span>
             <div>
-              <strong className="text-zinc-900">注册 Vercel 账号</strong>
+              <strong className="text-zinc-900">注册 Vercel + 连接 GitHub</strong>
               <p className="mt-1">
                 前往{" "}
                 <a href="https://vercel.com/signup" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                   vercel.com
                 </a>{" "}
-                注册，推荐使用 GitHub 登录。
+                用 GitHub 注册登录，然后去{" "}
+                <a href="https://vercel.com/dashboard/settings/integrations" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                  Settings → Integrations → GitHub
+                </a>{" "}
+                完成授权连接。
               </p>
             </div>
           </li>
           <li className="flex gap-3">
             <span className="w-6 h-6 bg-zinc-900 text-white rounded-full flex items-center justify-center text-xs shrink-0 mt-0.5">2</span>
             <div>
-              <strong className="text-zinc-900">复制模板仓库</strong>
+              <strong className="text-zinc-900">创建 Vercel Token</strong>
               <p className="mt-1">
-                打开{" "}
-                <a href={template.repoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                  {template.repoUrl}
-                </a>
-                ，点击 &quot;Use this template&quot;，创建你自己的副本。
+                前往{" "}
+                <a href="https://vercel.com/account/tokens" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                  vercel.com/account/tokens
+                </a>{" "}
+                创建 Token，选择 <strong>Full Account</strong> 权限。
               </p>
             </div>
           </li>
           <li className="flex gap-3">
             <span className="w-6 h-6 bg-zinc-900 text-white rounded-full flex items-center justify-center text-xs shrink-0 mt-0.5">3</span>
             <div>
-              <strong className="text-zinc-900">在 Vercel 导入仓库</strong>
-              <p className="mt-1">
-                在 Vercel Dashboard 点击 &quot;Import Project&quot;，选择你的仓库。设置以下环境变量：
-              </p>
-              <div className="mt-2 bg-zinc-800 text-zinc-200 p-3 rounded-lg font-mono text-xs overflow-x-auto">
-                <div>NEXT_PUBLIC_BLOG_API_URL = https://your-platform-url.com</div>
-                <div>NEXT_PUBLIC_USERNAME = your-username</div>
-              </div>
-            </div>
-          </li>
-          <li className="flex gap-3">
-            <span className="w-6 h-6 bg-zinc-900 text-white rounded-full flex items-center justify-center text-xs shrink-0 mt-0.5">4</span>
-            <div>
-              <strong className="text-zinc-900">创建 Deploy Hook</strong>
-              <p className="mt-1">
-                在 Vercel 项目设置 &gt; Git &gt; Deploy Hooks 中，创建一个 hook，复制生成的 URL。
-              </p>
-            </div>
-          </li>
-          <li className="flex gap-3">
-            <span className="w-6 h-6 bg-zinc-900 text-white rounded-full flex items-center justify-center text-xs shrink-0 mt-0.5">5</span>
-            <div>
-              <strong className="text-zinc-900">回到平台完成配置</strong>
+              <strong className="text-zinc-900">回到平台一键部署</strong>
               <p className="mt-1">
                 前往{" "}
                 <Link href="/dashboard/deploy" className="text-blue-600 hover:underline">
                   部署管理
                 </Link>{" "}
-                页面，粘贴 Deploy Hook URL，点击完成设置。
+                页面，选择模板，粘贴 Token，点击「开始部署」。平台自动创建项目、配置环境变量。
               </p>
             </div>
           </li>
         </ol>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex gap-4 flex-wrap">
         <a
           href={template.repoUrl}
           target="_blank"
